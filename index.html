@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="استمارات الفروع">
+<meta name="theme-color" content="#0b5f8a">
+<title>استمارات فروع ماء النجف</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* =====================================================================
+   إعدادات Firebase — الصق القيم من موقع Firebase (حسب الدليل)
+   إذا بقت فارغة، التطبيق يشتغل "وضع تجربة" على هذا الجهاز فقط.
+   ===================================================================== */
+// إيميل مسؤول التطبيق (يحدد فروع الموظفين ويعدّل الإعدادات) — نفس الإيميل بقواعد Firebase
+const ADMIN_EMAILS = ["chasseng@gmail.com","chasseng@googlemail.com"];
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDMWBWZALaPRF466qNBV45V3OhbkvCOPR4",
+  authDomain: "qadisiyah-forms-2026.firebaseapp.com",
+  projectId: "qadisiyah-forms-2026",
+  appId: "1:147409051137:web:a4bd83a422828ec933aa00"
+};
+</script>
+<style>
+:root{--blue:#0b5f8a;--ink:#1d2730;--mute:#6b7782;--line:#d9e0e5;--bg:#f4f6f8;--ok:#1f7a4a;--okbg:#e5f4ec;--wait:#9a5b00;--waitbg:#fdf1dc;--red:#b3261e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:16px}
+button,input,textarea,select{font:inherit;color:inherit}
+header{background:var(--blue);color:#fff;padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:6px}
+header h1{font-size:17px;margin:0;flex:1}
+header .hb{background:none;border:0;color:#fff;font-size:14px;padding:4px 6px;cursor:pointer;opacity:.9}
+header .back{font-size:22px}
+main{max-width:720px;margin:0 auto;padding:14px 14px 110px}
+.note{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--mute);font-size:14px;margin-bottom:12px;line-height:1.7}
+.note.warn{background:var(--waitbg);border-color:#efd59c;color:var(--wait)}
+.filters{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 14px;font-size:14px;white-space:nowrap;cursor:pointer}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.card h3{font-size:15px;margin:0 0 6px}
+.item{cursor:pointer}.item .t{font-weight:600;line-height:1.5}
+.item .m{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px;color:var(--mute);flex-wrap:wrap}
+.badge{font-size:12px;padding:2px 9px;border-radius:10px;font-weight:600}
+.b-draft{background:#eef1f3;color:#4a5560}.b-review{background:var(--waitbg);color:var(--wait)}.b-approved{background:var(--okbg);color:var(--ok)}
+.fab{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;border:0;border-radius:28px;padding:14px 26px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer;z-index:4}
+label.f{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input.i,textarea.i,select.i{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
+textarea.i{resize:vertical;min-height:64px;line-height:1.6}
+input.i:focus,textarea.i:focus,select.i:focus{outline:2px solid var(--blue);border-color:transparent}
+.row{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.row .hd{display:flex;align-items:center;justify-content:space-between;font-weight:700;color:var(--blue);font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px}
+.x{background:none;border:0;color:var(--red);font-size:14px;cursor:pointer}
+.chk{display:flex;align-items:center;gap:6px;font-size:14px;margin-top:8px}
+.chg{font-size:12px;color:var(--wait);margin-top:3px;line-height:1.5}
+.chg::before{content:"كان: "}
+.changed{background:#fffaf0!important;border-color:#e9c98a!important}
+.newrow{border-color:#e9c98a;background:#fffdf7}
+details.st{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+details.st summary{font-size:13px;color:var(--blue);cursor:pointer}
+.kind{font-size:12px;color:var(--mute)}
+.sum{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:17px}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;width:100%;margin-top:8px}
+.btn.sec{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
+.btn.ok{background:var(--ok)}
+.btn.ghost{background:none;color:var(--red);border:1px solid #e3c4c1}
+.btn:disabled{opacity:.5;cursor:default}
+.bar{display:flex;gap:8px}.bar .btn{flex:1}
+.fl{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid #eef1f3}
+.fl:first-of-type{border-top:0}
+.fl span{flex:1;font-size:15px}
+.fl small{display:block;color:var(--mute);font-size:12px}
+.fl .btn{width:auto;margin:0;padding:8px 12px;font-size:14px}
+.hint{font-size:13px;color:var(--mute);margin-top:6px;line-height:1.6}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#22313b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:40;max-width:90vw;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(15,25,32,.55);z-index:30;display:flex;flex-direction:column}
+.modal .top{background:#fff;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));display:flex;gap:8px;align-items:center}
+.modal .top b{flex:1}.modal .top .btn{width:auto;margin:0;padding:9px 14px}
+.modal .scroll{flex:1;overflow:auto;padding:12px;background:#5d6a74}
+.dlg{background:#fff;border-radius:14px;padding:18px;margin:auto;width:min(92vw,380px)}
+.dlg p{margin:0 0 12px;line-height:1.7}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px}
+@keyframes s{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--mute);padding:40px 10px;line-height:1.7}
+.v{background:#f7f9fa;border-radius:8px;padding:8px 10px;line-height:1.6;min-height:38px}
+.login{max-width:380px;margin:30px auto}
+.login h2{font-size:18px;margin:0 0 4px}
+.err{color:var(--red);font-size:14px;margin-top:8px;min-height:20px}
+.link{background:none;border:0;color:var(--blue);cursor:pointer;font-size:14px;padding:6px 0;text-decoration:underline}
+.photo{background:var(--blue);color:#fff;border:0;border-radius:12px;padding:16px;font-weight:700;width:100%;font-size:17px;cursor:pointer}
+/* ---------- A4 sheets (PDF) ---------- */
+.wrap{transform-origin:top right}
+.sheet{width:794px;height:1123px;background:#fff;color:#000;padding:48px 52px 40px;font-family:"Times New Roman",Times,serif;font-weight:700;direction:rtl;overflow:hidden;--k:1}
+.sheet .c{font-size:calc(var(--k)*13pt);line-height:1.45}
+.sheet .scope{text-align:justify;margin:22px 0 18px;font-size:calc(var(--k)*16pt)}
+.sheet table.t{width:100%;border-collapse:collapse}
+.sheet table.t th,.sheet table.t td{border:1px solid #000;padding:5px 6px;text-align:center;vertical-align:middle}
+.sheet table.t th{background:#d9d9d9}
+.sheet table.t td.d{text-align:justify}
+.sheet .names{display:flex;text-align:center;margin-top:calc(var(--k)*90px);font-size:calc(var(--k)*16pt)}
+.sheet .names>div{flex:1;line-height:1.9}
+.sheet .eh{display:flex;justify-content:space-between;align-items:flex-start;line-height:1.5}
+.sheet .eh .en{direction:ltr;text-align:left;font-size:calc(var(--k)*11pt)}
+.sheet .hr{border-bottom:1.5px solid #000;margin:8px 0 16px}
+.sheet .ttl{text-align:center;font-size:calc(var(--k)*14pt);margin-bottom:10px}
+.sheet .par{text-align:justify;font-size:calc(var(--k)*14pt);line-height:1.7;margin-bottom:10px}
+.sheet .sig{display:flex;text-align:center;margin-top:calc(var(--k)*60px);font-size:calc(var(--k)*13pt)}
+.sheet .sig>div{flex:1;line-height:1.8}
+.offscreen{position:fixed;top:0;left:-20000px}
+</style>
+</head>
+<body>
+<header><button class="hb back" id="back" hidden aria-label="رجوع">→</button><h1 id="htitle">استمارات فروع ماء النجف</h1><button class="hb" id="gear" hidden aria-label="الإعدادات">⚙︎</button><button class="hb" id="logout" hidden>خروج</button></header>
+<main id="app"><div class="empty"><span class="spin"></span> جارِ التحميل…</div></main>
+<button class="fab" id="fab" hidden>+ كشف جديد</button>
+<input type="file" id="phf" accept="image/*" multiple hidden><input type="file" id="phm" accept="image/*" multiple hidden>
+
+<script>
+/* ===== مولّد الاستمارات ===== */
+const LOGO_B64="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";
+/* ===== استمارات فرع ماء القادسيه — مولّد ملفات Word (منقول من kashf.js المعتمد) =====
+   makeForms(docxLib, logoBase64) -> { build(form, J) -> Document }
+   forms: kashf | tasir | istimara | mahdar | mutabaqa | idkhal_ikhraj | idkhal_mustahlaka | tathmeen | tathmeen_aliyat | istihlak | tazeez */
+function makeForms(D, LOGO_B64){
+const {Document,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,VerticalAlign,TableLayoutType,HeightRule,ShadingType,UnderlineType,ImageRun,PageBreak}=D;
+let J={}, items=[], C={};
+const L=t=>String(t||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>l.split("|").map(x=>x.trim()));
+const LOGO=(()=>{ if(!LOGO_B64) return null; const s=atob(LOGO_B64), u=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; })();
+const F="Times New Roman", AL=AlignmentType, VA=VerticalAlign;
+const run=(t,z,o={})=>new TextRun({text:t,font:{ascii:F,hAnsi:F,cs:F},size:z,sizeComplexScript:z,bold:true,boldComplexScript:true,rightToLeft:!o.ltr,underline:o.u?{type:UnderlineType.SINGLE}:undefined});
+// Latin tokens (Q=200m3/hr, 300-Kva) isolated as LTR so they don't flip in iPhone Pages
+const runs=(t,z,o={})=>{const out=[];const re=/[0-9A-Za-z][0-9A-Za-z=\/\\.\-]*[A-Za-z][0-9A-Za-z=\/\\.\-]*|[A-Za-z]/g;let i=0,m;t=String(t??"");
+  while((m=re.exec(t))){if(m.index>i)out.push(run(t.slice(i,m.index),z,o));out.push(run("⁦"+m[0]+"⁩",z,{...o,ltr:true}));i=m.index+m[0].length;}
+  if(i<t.length)out.push(run(t.slice(i),z,o));if(!out.length)out.push(run("",z,o));return out;};
+const P=(t,o={})=>new Paragraph({bidirectional:!o.ltr,alignment:o.align||AL.BOTH,spacing:{before:o.before||0,after:o.after??0,line:o.line||276},
+  children:Array.isArray(t)?t:(o.ltr?[run(t,o.size||28,{ltr:true})]:runs(t,o.size||28,o))});
+const B={style:BorderStyle.SINGLE,size:6,color:"000000"};
+const N={style:BorderStyle.NONE,size:0,color:"FFFFFF"};
+const NB={top:N,bottom:N,left:N,right:N}, NBT={...NB,insideHorizontal:N,insideVertical:N};
+const GREY={type:ShadingType.CLEAR,fill:"D9D9D9",color:"auto"};
+const cell=(t,w,o={})=>new TableCell({borders:o.nob?NB:{top:o.noTop?N:B,bottom:o.noBottom?N:B,left:o.noLeft?N:B,right:o.noRight?N:B},
+  width:{size:w,type:WidthType.DXA},columnSpan:o.span,shading:o.head?GREY:undefined,verticalAlign:o.v||VA.CENTER,
+  margins:{top:o.mt??40,bottom:o.mb??40,left:80,right:80},
+  children:(Array.isArray(t)?t:[t]).map(x=>x instanceof Paragraph?x:P(x,{align:o.align||AL.CENTER,size:o.size||26,line:o.line||260,ltr:o.ltr}))});
+// cells given RIGHT→LEFT and stored reversed (no bidiVisual: iPhone Pages ignores it)
+const row=(cells,h,hd)=>new TableRow({cantSplit:true,tableHeader:!!hd,height:h?{value:h,rule:HeightRule.ATLEAST}:undefined,children:[...cells].reverse()});
+const table=(widthsRL,rows,o={})=>new Table({alignment:AL.CENTER,layout:TableLayoutType.FIXED,width:{size:widthsRL.reduce((a,c)=>a+c,0),type:WidthType.DXA},
+  columnWidths:[...widthsRL].reverse(),borders:o.nob?NBT:undefined,rows});
+const A=s=>String(s??"").replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+const A2=s=>String(s??"").replace(/[0-9A-Za-z=\/\\.\-]+/g,t=>/[A-Za-z]/.test(t)?t:A(t)); // لا يحوّل أرقام المواصفات اللاتينية
+const DATE="     /     / "+A(new Date().getFullYear());
+const sigTable=(cols,size=26,tw=10200)=>{const w=Math.floor(tw/cols.length);
+  return table(cols.map(()=>w),[row(cols.map(l=>cell(l.map(x=>P(x,{align:AL.CENTER,size,line:300})),w,{nob:true})))],{nob:true});};
+const tail=()=>new Paragraph({spacing:{before:0,after:0,line:20,lineRule:"exact"},children:[new TextRun({text:"",size:2})]});
+const logoRun=(w,h)=>LOGO?new ImageRun({type:"jpg",data:LOGO,transformation:{width:w,height:h}}):new TextRun("");
+const page=(kids,m={top:800,bottom:700,left:850,right:850})=>new Document({sections:[{properties:{page:{size:{width:11906,height:16838},margin:m}},children:[...kids,tail()]}]});
+const COMM=()=>L(C.fault).map(r=>[r[0]||"",r[1]||"",DATE]);
+const HEADER3=()=>["محافظة النجف","مديرية ماء النجف",C.center||""];
+const SIG=(t,role)=>L(t).map(r=>role?[r[0]||"",r[1]||"",r[2]||"",DATE]:[r[0]||"",r[1]||"",DATE]);
+
+// ---------- 1. الكشف ----------
+function kashf(){
+  const W=[600,4400,1000,1200,1400,1600], TW=10200, c=J.compact;
+  const cl=(t,i,o={})=>cell(t,o.w||W[i],{size:26,mt:c?30:100,mb:c?30:100,line:276,...o});
+  const rows=J.rows.map((r,i)=>row([A(i+1),r[0],A(r[1]),r[2],A(r[3]),A(r[4])].map((v,j)=>cl(v,j,{align:j==1?AL.BOTH:AL.CENTER})),c?300:560));
+  const tbl=table(W,[row(["ت",J.label||"تفاصيل العمل","الكمية","الوحدة","السعر","السعر الكلي"].map((h,i)=>cl(h,i,{head:true})),c?300:560,true),...rows,
+    row([cl("المجموع / فقط "+J.words+" دينار لاغيرها",0,{span:5,w:TW-W[5],align:AL.BOTH}),cl(A(J.total),5)],c?300:560)]);
+  return page([...HEADER3().map((h,i)=>P(h,{size:26,after:i==2?500:0})),P("نطاق الكشف/ "+J.scope,{size:32,line:340,after:400}),tbl,P("",{after:900}),sigTable(COMM(),32)]);
+}
+// ---------- 2. محضر تسعير ----------
+function tasir(){
+  const TW=10400, W=[600,4600,1000,900,1600,1700];
+  const hd=(t,w)=>cell(t,w,{head:true,size:24,mt:20,mb:20,line:240});
+  const body=(J.rows||[]).map((r,i)=>row([A(i+1),r[0],r[2],A(r[1]),A(r[3]),A(r[4])].map((v,j)=>cell(v,W[j],{size:24,line:250,mt:20,mb:20,align:j==1?AL.BOTH:AL.CENTER})),480));
+  const head=table([4000,1000,5400],[row([
+    cell(["جمهورية العراق","محافظة النجف الاشرف","مديرية ماء النجف الاشرف"].map(x=>P(x,{size:24,line:260})),4000,{nob:true,v:VA.TOP}),
+    cell("",1000,{nob:true}),
+    cell(["REPUBLIC OF IRAQ","ALNAJAF AL ALASHRAF GOVERNORATE","DIRECTORE OF WATER FOR HOLY NAJAF"].map(x=>P(x,{ltr:true,align:AL.LEFT,size:22,line:260})),5400,{nob:true,v:VA.TOP})])],{nob:true});
+  const line=new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:8,color:"000000",space:1}},spacing:{after:200},children:[]});
+  const tbl=table(W,[row(["ت","التفاصيل","الوحدة","الكمية","سعر المفرد","سعر الاجمالي"].map((h,i)=>hd(h,W[i])),0,true),...body,
+    row([cell("المجموع / فقط "+J.words+" دينار لاغيرها",TW-W[5],{span:5,size:26,align:AL.BOTH,mt:30,mb:30}),cell(A(J.total),W[5],{size:26})],420)]);
+  return page([head,line,
+    P("م/ محضر تسعير",{align:AL.CENTER,size:28,after:160}),
+    P(`إشارة إلى الأمر الإداري المرقم ( ${C.tasirOrder||""} ) و المتضمن تشكيل لجنة اعتدال الأسعار والتدقيق الفني وبعد مراجعة وتدقيق أسعار فقرات الكشف التخميني الخاص ${C.tasirPlace||""} لكشف ( ${J.name||"                                        "} )`,{size:28,line:340,after:160}),
+    P("مبلغ الفقرة / الكشف التخميني وفق الأسعار السائدة في الأسواق المحلية",{size:28,after:200}),
+    tbl,P(`وعليه تم توقيع المحضر المرقم ( ${J.no?A(J.no):"          "} ) .`,{size:28,before:300,after:900}),
+    sigTable(SIG(C.tasirCommittee,true),26,TW)],SM);
+}
+// ---------- 3. استمارة تنفيذ اعمال (صفحتان) ----------
+function istimara(){
+  const TW=10200, LW=2300, VW=TW-LW, NW=[2640,2640,2620];
+  const lab=(t,o={})=>cell(t,LW,{head:true,size:28,mt:60,mb:60,...o});
+  const head=table([7700,2500],[row([
+    cell([P("السيد مدير ماء محافظة النجف الاشرف المحترم.",{after:120}),P("السيد المعاون الفني المحترم.",{after:120}),P([run("الموضوع / ",28),run("استماره تنفيذ اعمال",28,{u:true})])],7700,{nob:true}),
+    cell([new Paragraph({alignment:AL.CENTER,children:[logoRun(72,92)]})],2500,{nob:true})])],{nob:true});
+  const body=P(`التفضل بالموافقة على اجراء تنفيذ الاعمال المبين ادناه والمثبته تفاصيلها بالكشف المرفق والخاصه بمركز تشغيل وصيانة ( ${C.short||""} ) ولكم الامر مع التقدير.`,{before:240,after:240,line:340});
+  const sig1=sigTable([[C.manager||"",C.managerTitle||"",DATE],["مقدم الطلب",J.submitter||C.submitter||"",DATE]]);
+  const nm=(l,w,b)=>cell(l.map(x=>P(x,{align:AL.CENTER,size:26})),w,{noTop:true,mt:200,mb:100,...b});
+  const main=table([LW,...NW],[
+    row([lab("الفقرات المطلوبه للعمل"),cell((Array.isArray(J.title)?J.title:[J.title]).map(x=>P(x,{line:320})),VW,{span:3,mt:60,mb:60})],1100),
+    row([lab("تقرير لجنة تحديد الاعطال",{noBottom:true}),cell(P(J.faults_text||("بعد اجراء الكشف الموقعي على "+J.faults+" وجد الحاجه الماسه الى صيانتها وتم اعداد كشف مفصل بذلك مع التقدير ."),{line:320}),VW,{span:3,noBottom:true,v:VA.TOP,mt:60})],1300),
+    row([lab("",{noTop:true}),nm(COMM()[0]||["","",""],NW[0],{noLeft:true}),nm(COMM()[1]||["","",""],NW[1],{noLeft:true,noRight:true}),nm(COMM()[2]||["","",""],NW[2],{noRight:true})]),
+    row([lab("تاريخ اخر تصليح واخراج"),cell("",VW,{span:3})],2300),
+    row([lab("بيان توفر الرصيد المخزني"),cell("",VW,{span:3})],2300)],{nob:true});
+  const W3=[5600,2300,2300];
+  const p2a=table(W3,[row([cell("راي مسؤول شعبة (                    )",W3[0],{head:true,size:28}),cell("لجنة التنفيذ",W3[1],{head:true,size:28}),cell("لجنة الاستلام",W3[2],{head:true,size:28})]),
+    row([cell("",W3[0]),cell(["١- ","٢- ","٣- "].map(x=>P(x,{after:120})),W3[1],{v:VA.TOP}),cell(["١- ","٢- ","٣- "].map(x=>P(x,{after:120})),W3[2],{v:VA.TOP})],2500),
+    row([cell("مدة تنفيذ العمل (            ) ايام فعليه",TW,{span:3,size:28})])]);
+  const sec=t=>[row([cell(t,TW,{head:true,size:28})]),row([cell("",TW)],1950)];
+  const p2b=table([TW],[...sec("رأي المعاون الفني"),...sec("تقرير شعبة الحسابات وتأييد توفر الاعتماد المالي"),...sec("موافقة السيد المدير على تنفيذ العمل والامر بالصرف"),...sec("تقرير الرقابه الداخليه")]);
+  return page([head,body,sig1,P("",{after:300}),main,new Paragraph({children:[new PageBreak()]}),p2a,P("",{after:200}),p2b],{top:700,bottom:700,left:850,right:850});
+}
+// ---------- 4. محضر فحص واستلام ----------
+function mahdar(){
+  const W=[600,4800,1600,1600,1600], L=["أ","ب","ج","د","هـ","و","ز","ح","ط","ي","ك","ل","م","ن"];
+  const k=[new Paragraph({bidirectional:true,alignment:AL.CENTER,spacing:{after:300},children:[run("محضر فحص واستلام",34,{u:true})]}),
+    P(`بناء على امر الصرف المرقم ( ${J.order_no||"            "} ) في ${J.order_date||DATE} والخاص بفحص واستلام أعمال السلفة المستديمه الممنوحة ل${C.branchPhrase||""} فقد اجتمعت اللجنة المخصصة لفحص واستلام الأعمال المذكورة وقامت بالفحص ووجدت الأعمال تم تنفيذها وحسب المواصفات الفنية وعليه وقعت بتأريخ ${DATE} وحسب كشف الذرعة الآتي :`,{line:360,after:300})];
+  J.sections.forEach((s,i)=>{
+    if(i)k.push(P("",{after:100,line:200}));
+    const tr=new TableRow({cantSplit:true,tableHeader:true,children:[new TableCell({columnSpan:5,width:{size:W.reduce((a,c)=>a+c,0),type:WidthType.DXA},borders:{top:N,left:N,right:N,bottom:B},margins:{top:0,bottom:120,left:0,right:0},
+      children:[P([run(L[i]+"- ",28),run("اسم العمل / ",28,{u:true}),...runs(s.title,28)],{line:340})]})]});
+    k.push(table(W,[tr,row(["ت","التفاصيل","الكمية والوحدة حسب الكشف","الكمية والوحدة حسب الذرعة","الملاحظات"].map((h,j)=>cell(h,W[j],{head:true,size:26})),0,true),
+      ...s.rows.map((r,n)=>row([A(n+1),String(r[0]).replace(/^\s*تجهيز\s+/,''),r[1],r[1],r[2]||"منفذه"].map((v,j)=>cell(v,W[j],{size:26,line:260,align:j==1?AL.BOTH:AL.CENTER})),340))]));});
+  k.push(P(`وعليه تم الاستلام بتاريخ ${DATE}`,{before:200,after:300}));
+  k.push(sigTable(COMM(),28));
+  return page(k,{top:850,bottom:850,left:850,right:850});
+}
+// ---------- 5-10. مطابقة + استمارات المخازن ----------
+const itemTable=(heads,W,minRows,h,dot,fs=24)=>{const n=items.length?items.length:minRows;
+  const rows=[row(heads.map((x,i)=>cell(x,W[i],{head:true,size:fs,mt:10,mb:10,line:240})),0,true)];
+  for(let i=0;i<n;i++){const it=items[i]||[];rows.push(row(W.map((w,j)=>j==0?cell(A(i+1)+(dot?".":""),w,{size:fs,mt:10,mb:10,line:240})
+     :cell(it[j-1]!=null?A2(it[j-1]):"",w,{size:fs,mt:10,mb:10,line:240,align:j==1?AL.BOTH:AL.CENTER})),h));}
+  return table(W,rows);};
+const SM={top:600,bottom:500,left:700,right:700};
+function idkhal_ikhraj(){
+  const k=[table([3900,2600,3900],[row([
+    cell(["جمهورية العراق","محافظة النجف الأشرف","مديرية ماء النجف الأشرف"].map(x=>P(x,{size:24,line:260})),3900,{nob:true,v:VA.TOP}),
+    cell([new Paragraph({alignment:AL.CENTER,children:[logoRun(62,80)]})],2600,{nob:true}),
+    cell(["Republic of Iraq","Al-najaf province","Najaf Water Directorate"].map(x=>P(x,{ltr:true,align:AL.LEFT,size:26,line:300})),3900,{nob:true,v:VA.TOP})])],{nob:true}),
+   P("م / طلب إدخال وإخراج",{align:AL.CENTER,size:28,before:100,after:100}),
+   P(`يرجى التفضل بالموافقة على إدخال وإخراج المواد أدناه وحسب أمر الصرف المرقم / ${J.order_no||"            "} في ${J.order_date||DATE} وبعد تأشير وصولاتها في قسم التدقيق والموافقات الأصولية المرفقة طياً .............. مع الشكر والتقدير .`,{line:260,after:100,size:24}),
+   itemTable(["ت","المواد المجهزة","الوحدة","العدد"],[800,6400,1600,1600],20,0,true,20),P("",{after:100}),
+   table([6400,4000],[row([cell([P([run("المرفقات :-",28,{u:true})],{line:300}),...["١- أوليات طلب شراء المواد","٢- أمر الصرف","٣- نسخة كشف مصادقة من التدقيق","٤- مطابقة لجنة فحص المواد"].map(x=>P(x,{size:24,line:260}))],6400,{nob:true,v:VA.TOP}),
+     cell([P(""),P("ر. لجنة التنفيذ",{align:AL.CENTER,size:26}),P(J.signer||"..............................",{align:AL.CENTER,size:26,before:120,after:120}),P(DATE,{align:AL.CENTER,size:26})],4000,{nob:true,v:VA.TOP})])],{nob:true})];
+  return page(k,SM);}
+function idkhal_mustahlaka(){
+  return page([P("السيد مسؤول المخازن المحترم.",{size:32,after:200}),
+    P("م/طلب إدخال مواد مستهلكة",{align:AL.CENTER,size:32,after:160}),
+    P("يرجى التفضل بالموافقة على إدخال المواد المستهلكة أدناه وحسب قرار الاستهلاك والموافقات الأصولية المرفقة طيا. ولكم الشكر...",{size:30,line:320,after:200}),
+    itemTable(["ت","المادة","الكمية","الوحدة"],[800,6800,1400,1400],22,215,true,28),
+    P("المرفقات:",{size:28,before:160,after:60}),P("١- محضر تثمين مواد مستهلكة.",{size:28}),P("٢- قرار الاستهلاك",{size:28,after:300}),
+    table([6400,4000],[row([cell("",6400,{nob:true}),cell([P("التوقيع",{align:AL.CENTER,size:28,after:300}),P("اسم صاحب الطلب",{align:AL.CENTER,size:28}),P(J.signer||"",{align:AL.CENTER,size:28})],4000,{nob:true})])],{nob:true})],SM);}
+function tathmeen(al){
+  return page([new Paragraph({bidirectional:true,alignment:AL.CENTER,spacing:{after:200},children:[run("محضر تثمين مواد مستهلكة",32,{u:true})]}),
+    P(al?`إستناداً إلى الأمر الإداري المرقم ( ${C.alOrder||""} ) والمتضمن تشكيل لجنة لغرض تثمين المواد المستهلكة ، فقد إجتمعت اللجنة بتأريخ ( ${J.date||"   /   / ٢٠٢٦"} ) لمعاينة وتثمين المواد المقدمة من قبل المهندس ( ${J.by||"                         "} ) وتم تثمين المواد حسب ما مبين أدناه.`
+        :`إستناداً إلى الأمر الإداري المرقم ( ${C.tathOrder||""} ) والخاص بتشكيل لجنة لغرض تثمين المواد المستهلكة ، فقد إجتمعت اللجنة بتأريخ ( ${J.date||"   /   / ٢٠٢٦"} ) لمعاينة وتثمين المواد المقدمة من قبل السيد ( ${J.by||"                         "} ) وتم تثمين المواد حسب ما مبين أدناه .`,{size:28,line:320,after:200}),
+    itemTable(["ت","أسم المادة ومواصفاتها","الكمية","وحدة القياس",al?"الوزن":"الوزن كغم","الكلفة للمفرد (دينار)","الكلفة الكلية (دينار)","الملاحظات"],[600,3100,800,1100,900,1300,1300,1300],20,320,false,24),
+    P("أسم وتوقيع مقدم الطلب :",{size:28,before:200,after:160}),
+    P("●  يتحمل مقدم الطلب ذكر الكمية للمادة المستهلكة ووحدتها ( وزن إذا كانت معدنية )",{size:26,after:80}),
+    P("●  ختم المحضر بتأريخ (   /   / ٢٠٢٦ )",{size:26,after:400}),
+    sigTable(SIG(al?C.alCommittee:C.tathCommittee,true),26,10400)],SM);}
+function istihlak(){
+  return page([new Paragraph({bidirectional:true,alignment:AL.CENTER,spacing:{after:200},children:[run("قرار إستهلاك",32,{u:true})]}),
+    P(`إستناداً إلى الأمر الإداري المرقم ( ${C.istOrder||""} ) والمتضمن تشكيل لجنة لمعاينة المواد وتحديد حالة الإستهلاك من عدمه ، فقد إجتمعت اللجنة بتأريخ ${J.date||"   /   / ٢٠٢٦"} لمعاينة المواد المقدمة من قبل المهندس ( ${J.by||"                     "} ) ر. لجنة تنفيذ العمل ( ${J.work||"                     "} ) وحسب أمر الصرف المرقم ( ${J.order_no||"         "} في ${J.order_date||"   /   / ٢٠٢٦"} ) وتبين أن المواد مستهلكة وقد أدخلت في سجل المستهلك`,{size:28,line:320,after:200}),
+    itemTable(["ت","المادة","الكمية رقماً","الكمية كتابةً","الوحدة","حالة المادة","الملاحظات"],[600,3700,1000,1500,1100,1300,1200],20,270,false,24),
+    P("توقيع أمين مخزن المستهلك",{size:28,before:200,after:100}),P("قرار اللجنة / المواد مستهلكة",{size:28,after:400}),
+    sigTable(SIG(C.istCommittee,true),26,10400)],SM);}
+function mutabaqa(){
+  return page([new Paragraph({bidirectional:true,alignment:AL.CENTER,spacing:{after:240},children:[run("محضر فحص ومطابقة",32,{u:true})]}),
+    P(`أشارة الى الأمر الاداري المرقم ( ${C.mutOrder1||""} ) والحاقا بالامر الاداري المرقم ${C.mutOrder2||""} والمتضمن تشكيل لجنه الفحص والمطابقة للمواد قبل ادخالها مخزنيا وبناءا على الامر الاداري المرقم ( ${J.order_no||"          "} ) في ${J.order_date||"   /   / ٢٠٢٦"} والخاص بتشكيل اللجنه الخاصه بتنفيذ العمل ( ${J.work||("السلفه المستديمه ل"+(C.branchPhrase||""))} ) ، فقد قامت اللجنة بفحص ومعاينه المواد المجهزة والمدرج كمياتها ومواصفاتها في ادناه ووجدت انها مطابقة للمواصفات المحدده في الكشف العمل ووصولات الشراء ولاجله وقعت اللجنة بتاريخ ${J.date||"   /   / ٢٠٢٦"}`,{size:28,line:340,after:240}),
+    itemTable(["ت","المواد المجهزة","الوحدة","العدد"],[800,6800,1400,1400],20,300,true,28),P("",{after:500}),
+    sigTable(SIG(C.mutCommittee,false),28,10400)],SM);}
+// ---------- 11. إستمارة تعزيز سلفة مستديمة ----------
+function tazeez(){
+  const TW=10400, W=[8200,2200];
+  const it=J.items||[]; const BL=450,BF=500,BT=550,BM=600;
+  const hd=(t,w,o={})=>cell(t,w,{head:true,size:26,mt:0,mb:0,line:240,...o});
+  const t1=table(W,[row([hd("الأعمال المنفذة",W[0]),hd("المبلغ",W[1])],0,true),
+    ...it.map((r,i)=>row([cell(A(i+1)+"- "+r[0],W[0],{size:26,align:AL.BOTH,line:250,mt:10,mb:10}),cell(A(r[1]),W[1],{size:28})],260)),
+    row([cell("المجموع / فقط "+(J.words||"")+" دينار لاغيرها",W[0],{size:32,align:AL.BOTH,mt:20,mb:20}),cell(A(J.total||""),W[1],{size:32})],420)]);
+  const G=[1734,1733,1733,1734,1733,1733], g=n=>Math.round(TW*n/6);
+  const cols=(n,f)=>Array.from({length:n},(_,i)=>f(i));
+  const full=(t,h)=>[row([hd(t,TW,{span:6})]),row([cell("",TW,{span:6})],h)];
+  const t2=table(G,[row([hd("التدقيق الفني والتأشير في سجلات الشعب",TW,{span:6})]),
+    row(cols(3,()=>hd("شعبة /",g(2),{span:2}))),row(cols(3,()=>cell("",g(2),{span:2})),BL),
+    row([hd("وحدة الإحصاء",g(3),{span:3}),hd("وحدة GIS",g(3),{span:3})]),row(cols(2,()=>cell("",g(3),{span:3})),BL),
+    ...full("تقرير الحسابات",BF),...full("تقرير التدقيق",BT),...full("موافقة السيد المدير",BM)]);
+  return page([new Paragraph({bidirectional:true,alignment:AL.CENTER,spacing:{after:160},children:[run("إستمارة تعزيز سلفة مستديمة",32,{u:true})]}),
+    P("السيد المدير المحترم ...",{size:32,after:100}),
+    P(`أرجو التفضل بالموافقة على تعزيز السلفة المستديمة الممنوحة بموجب أمر الصرف ( ${J.order_no||"            "} ) في ${J.order_date||"   /   / ٢٠٢٦"} وبمبلغ ( ${A(J.total||"            ")} ) دينار مع التقدير ...`,{size:32,line:300,after:140}),
+    t1,P("",{after:60,line:160}),t2,P("",{after:120}),
+    sigTable([[""],["المهندس",J.signer||"..............................","ر. لجنة التنفيذ"]],32,TW)],SM);}
+
+const F2={kashf,tasir,istimara,mahdar,mutabaqa,idkhal_ikhraj,idkhal_mustahlaka,tathmeen:()=>tathmeen(false),tathmeen_aliyat:()=>tathmeen(true),istihlak,tazeez};
+return { build(form, data){ if(!F2[form]) throw new Error("unknown form "+form); J=data||{}; items=J.items||[]; C=J.cfg||{}; return F2[form](); } };
+}
+// تكبير الجداول لعرض الصفحة كاملة (مثل finish.sh) — يحتاج JSZip
+async function widenTables(zipLib, blob){
+  const z=await zipLib.loadAsync(await blob.arrayBuffer()), p="word/document.xml";
+  let s=await z.file(p).async("string");
+  s=s.replace(/<w:tblW w:type="dxa" w:w="10[24]00"\/><w:jc w:val="center"\/>/g,'<w:tblW w:type="pct" w:w="5000"/><w:jc w:val="center"/><w:tblInd w:w="0" w:type="dxa"/>');
+  z.file(p,s);
+  const u=await z.generateAsync({type:"uint8array",compression:"DEFLATE"});
+  return new Blob([u],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+}
+if (typeof module!=="undefined") module.exports={makeForms,widenTables};
+
+/* ===== تحويل بيانات الكشف إلى بيانات كل استمارة ===== */
+/* ===== الفروع وإعداداتها الافتراضية (المسؤول يعدّلها من التطبيق) ===== */
+const BRANCHES = [["qadisiyah","القادسيه"],["mishkhab","المشخاب"],["manathera","المناذره"]];
+const BRANCH_NAME = id => (BRANCHES.find(b=>b[0]===id)||[,""])[1];
+// الحقول المشتركة لكل الفروع (لجنة اعتدال الأسعار وحدة)
+const GLOBAL_DEFAULT = {
+  tasirOrder:"٧٣٣٧ في ٢٠٢٦/٧/٥",
+  tasirCommittee:"السيد|قيصر صاحب عبد الامير|عضو حسابي\nالمهندس|علي حميد علي|عضو لجنة\nالمهندسة|اسراء خليل ابراهيم|عضو لجنة\nالمهندس|علي رزاق لفته|رئيس لجنة"
+};
+const BLANK3 = "الفني|..............\nالمهندس|..............\nالمهندس|..............";
+const BLANK3R = "السيد|..............|عضو\nالفني|..............|عضو\nالمهندس|..............|ر. اللجنة";
+function branchDefault(id){
+  const n = BRANCH_NAME(id) || "";
+  if(id==="qadisiyah") return {
+    short:"القادسيه", center:"مركز تشغيل وجباية ماء القادسيه", branchPhrase:"فرع ماء القادسيه", tasirPlace:"بفرع ماء القادسيه في ناحيه القادسيه",
+    manager:"م/ غسان حمزه عطيه", managerTitle:"مسؤول فرع ماء القادسيه", submitter:"م/ وليد جمال جواد",
+    fault:"الفني|حكمت عبدالحسين محمد\nالمهندس|وليد جمال جواد\nالمهندس|عامر هاشم عبدنور",
+    mutOrder1:"٧٣٣٧ في ٢٠٢٦/٧/٥", mutOrder2:"٨٢١٩ في ٢٠٢٦/٧/٢٧", mutCommittee:"الفني|اثير محسن عبود\nالمهندسة|نبراس صاحب محمد جواد\nالمهندسة|رغد خضير عباس",
+    tathOrder:"٧٣٣٧ في ٢٠٢٦/٧/٥", tathCommittee:"السيدة|منى جبار شهد|عضو\nالفني|مصطفى عادل محمد|عضو\nالمهندس|رائد محمد سلمان|ر. اللجنة",
+    alOrder:"٧١٨٩ في ٢٠٢٦/٧/١", alCommittee:"السيد|عباس محمد مهدي علي|عضو\nالفني|محمد عباس عبار|عضو\nالمهندس|أحمد عبد الزهرة جواد|ر. اللجنة",
+    istOrder:"٧٣٣٧ في ٢٠٢٦/٧/٥", istCommittee:"الفني|فائز عبد الحسن مبدر|عضو\nالمهندسة|سارة حسين عبد الرضا|عضو\nالمهندسة|منال علي حسين|ر. اللجنة" };
+  return { short:n, center:"مركز تشغيل وجباية ماء "+n, branchPhrase:"فرع ماء "+n, tasirPlace:"بفرع ماء "+n+" في "+n,
+    manager:"م/ ..............", managerTitle:"مسؤول فرع ماء "+n, submitter:"م/ ..............", fault:BLANK3,
+    mutOrder1:"..........", mutOrder2:"..........", mutCommittee:BLANK3, tathOrder:"..........", tathCommittee:BLANK3R,
+    alOrder:"..........", alCommittee:BLANK3R, istOrder:"..........", istCommittee:BLANK3R };
+}
+// حقول الإعدادات كما تظهر للمسؤول: [مفتاح، عنوان، نوع]  (lines = سطر لكل شخص: اللقب|الاسم|الصفة)
+const BRANCH_FIELDS = [
+  ["short","اسم الفرع المختصر (بالاستماره: مركز تشغيل وصيانة ( ... ))"],["center","السطر الثالث برأس الكشف"],["branchPhrase","«فرع ماء ...» بالمحاضر"],
+  ["tasirPlace","بمحضر التسعير بعد «الكشف التخميني الخاص»"],["manager","مسؤول الفرع (اسمه)"],["managerTitle","صفة مسؤول الفرع"],["submitter","مقدم الطلب الافتراضي"],
+  ["fault","لجنة تحديد الاعطال (الكشف والاستماره ومحضر الاستلام)","lines"],
+  ["mutOrder1","المطابقة: الأمر الإداري الأول"],["mutOrder2","المطابقة: الأمر الإداري الثاني"],["mutCommittee","لجنة المطابقة","lines"],
+  ["tathOrder","التثمين العادي: الأمر الإداري"],["tathCommittee","لجنة التثمين العادي","lines"],
+  ["alOrder","تثمين الآليات: الأمر الإداري"],["alCommittee","لجنة تثمين الآليات","lines"],
+  ["istOrder","قرار الاستهلاك: الأمر الإداري"],["istCommittee","لجنة قرار الاستهلاك","lines"]];
+const GLOBAL_FIELDS = [["tasirOrder","محضر التسعير: الأمر الإداري"],["tasirCommittee","لجنة اعتدال الأسعار (لكل الفروع)","lines"]];
+
+
+const AR_D = "٠١٢٣٤٥٦٧٨٩";
+const toAr = s => String(s ?? "").replace(/[0-9]/g, d => AR_D[d]);
+const toEn = s => String(s ?? "").replace(/[٠-٩]/g, d => AR_D.indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٫,]/g, ".");
+const num = s => { const v = parseFloat(toEn(s).replace(/[^\d.]/g, "")); return isFinite(v) ? v : 0; };
+const nstr = n => String(Math.round(n * 1000) / 1000);
+const fmt = n => toAr(nstr(n));
+function words(n){
+  n = Math.round(n); if (!n) return "صفر";
+  const ones=["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عشر","ثمانية عشر","تسعة عشر"];
+  const tens=["","","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
+  const hund=["","مائة","مائتان","ثلاثمائة","أربعمائة","خمسمائة","ستمائة","سبعمائة","ثمانمائة","تسعمائة"];
+  const u = x => { const h=Math.floor(x/100), r=x%100, p=[]; if(h)p.push(hund[h]);
+    if(r) p.push(r<20?ones[r]:(r%10?ones[r%10]+" و"+tens[Math.floor(r/10)]:tens[Math.floor(r/10)])); return p.join(" و"); };
+  const sc = (x,one,two,pl) => x===1?one:x===2?two:(x<=10?u(x)+" "+pl:u(x)+" "+one);
+  const parts=[], b=Math.floor(n/1e9), m=Math.floor(n%1e9/1e6), t=Math.floor(n%1e6/1e3), r=n%1000;
+  if(b)parts.push(sc(b,"مليار","ملياران","مليارات")); if(m)parts.push(sc(m,"مليون","مليونان","ملايين"));
+  if(t)parts.push(sc(t,"ألف","ألفان","آلاف")); if(r)parts.push(u(r));
+  return parts.join(" و");
+}
+const rowTotal = r => r.store ? 0 : num(r.q) * num(r.p);
+const total = k => (k.rows||[]).reduce((s,r)=>s+rowTotal(r),0);
+const STORE = "اخراج مخزني";
+
+// نوع الفقرة: material (مادة) | labor (عمل) | entry (سوائل/إنشائية: تدخل بالإدخال والمطابقة بس)
+const autoKind = r => /^\s*(عمل|اجور|أجور|اجرة|أجرة)(\s|$)/.test(r.d||"") ? "labor" : /ماء\s*مقطر|كونكريت|صب[هة]\s/.test(r.d||"") ? "entry" : "material";
+const kindOf = r => r.kind || autoKind(r);
+const stripT = s => String(s||"").replace(/^\s*تجهيز\s+/,"").replace(/بلاستك\s+ميلح/g,"هوز بلاستك").trim();
+// اسم المادة للمخازن: بدون "تجهيز" وبدون المنشأ
+const autoSName = r => stripT(r.d).replace(/\s*[-–،,]?\s*(منشأ|منشا|المنشأ|المنشا|صنع|مستورد)\s*[:\-]?\s*\S+(\s+(المنشأ|الصنع))?/g,"").replace(/\s{2,}/g," ").trim();
+const sName = r => (r.sname||"").trim() || autoSName(r);
+const autoMetal = r => { const d=r.d||""; return /نحاس|ملف/.test(d)?"نحاس":/براص|برونز/.test(d)?"براص":/مطاط|جوان|سيل/.test(d)?"مطاط":/بلاستك|بلاستيك|PVC|بولي|هوز|PE\b/i.test(d)?"بلاستك":"حديد"; };
+const metalOf = r => (r.metal||"").trim() || autoMetal(r);
+const qtyUnit = r => `${fmt(num(r.q))} ${r.u||""}`.trim();
+const scopeNoPrefix = t => String(t||"").replace(/^\s*(الكشف\s+التخميني\s+ال?خاص\s+ب|كشف\s+تخميني\s+ل|كشف\s+ل)\s*/,"").trim();
+const autoFaults = k => `بعد اجراء الكشف الموقعي على ${scopeNoPrefix(k.title).replace(/^(صيانة|صيانه|تصليح|اصلاح)\s+/,"")} وجد الحاجه الماسه الى صيانتها وتم اعداد كشف مفصل بذلك مع التقدير .`;
+const qWords = q => { const n=num(q); return Number.isInteger(n)&&n>0 ? words(n) : ""; };
+
+const materials = k => (k.rows||[]).filter(r=>kindOf(r)==="material");
+const entries = k => (k.rows||[]).filter(r=>kindOf(r)!=="labor" && !r.store);
+
+// ks = كشف واحد أو مجموعة كشوفات (المجموعة: استمارة وحدة تجمع كل المواد، والمحضر قسم لكل كشف)
+function formData(form, ks, cfg){
+  const J = formData0(form, ks); if(J) J.cfg = cfg || {...GLOBAL_DEFAULT, ...branchDefault((Array.isArray(ks)?ks[0]:ks).branch||"qadisiyah")}; return J;
+}
+function formData0(form, ks){
+  const list = Array.isArray(ks) ? ks : [ks], k = list[0];
+  const t = total(k), T = list.reduce((s,x)=>s+total(x),0);
+  const priced = r => [r.d, nstr(num(r.q)), r.u, r.store?STORE:nstr(num(r.p)), r.store?STORE:nstr(rowTotal(r))];
+  const all = f => list.flatMap(f);
+  switch(form){
+    case "kashf": return {scope:k.title, rows:k.rows.map(priced), words:words(t), total:nstr(t), compact:k.rows.length>9};
+    case "tasir": return {name:scopeNoPrefix(k.title), rows:k.rows.map(priced), words:words(t), total:nstr(t), no:k.tasirNo||""};
+    case "istimara": return {title:k.title, faults_text:(k.faults||"").trim()||autoFaults(k), submitter:(k.submitter||"").trim()||undefined};
+    case "mahdar": return {sections:list.map(x=>({title:x.title, rows:x.rows.map(r=>[stripT(r.d), qtyUnit(r), r.store?"منفذه (اخراج مخزني)":"منفذه"])}))};
+    case "mutabaqa":
+    case "idkhal_ikhraj": return {items:all(x=>entries(x).map(r=>[stripT(r.d), r.u, nstr(num(r.q))]))};
+    case "idkhal_mustahlaka": return {items:all(x=>materials(x).map(r=>[sName(r), nstr(num(r.q)), r.u]))};
+    case "tathmeen":
+    case "tathmeen_aliyat": { const al=form==="tathmeen_aliyat";
+      return {items:list.filter(x=>!!x.vehicle===al).flatMap(x=>materials(x).map(r=>[sName(r), nstr(num(r.q)), r.u, (r.w||"").trim(), "", "", metalOf(r)]))}; }
+    case "istihlak": return {items:all(x=>materials(x).map(r=>[sName(r), nstr(num(r.q)), qWords(r.q), r.u, "مستهلكة", ""]))};
+    case "tazeez": return {items:list.map(x=>[scopeNoPrefix(x.title), nstr(total(x))]), words:words(T), total:nstr(T)};
+  }
+}
+if (typeof module!=="undefined") module.exports={BRANCHES,branchDefault,GLOBAL_DEFAULT,formData,words,total,num,toAr,toEn,fmt,kindOf,sName,metalOf,autoSName,autoMetal,autoFaults,materials,entries,rowTotal};
+
+/* ===== نسخة "HTML" من مكتبة docx: نفس الاستمارات تنرسم صفحات A4 للـ PDF =====
+   makeForms(HtmlDocx, logo).build(form,J) يرجع Document عنده pages() = مصفوفة HTML لكل صفحة.
+   كل الأحجام العمودية تضرب بـ var(--k) حتى نكبّر/نصغّر الخط ليملأ الصفحة. */
+const HtmlDocx = (function(){
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const K = v => `calc(var(--k)*${+v.toFixed(2)}pt)`;            // حجم عمودي يتكبّر ويه الخط
+  const PB = "\u0000PAGEBREAK\u0000";
+  class TextRun{ constructor(o){ this.o = typeof o==="string" ? {text:o} : (o||{}); }
+    html(){ const o=this.o, z=(o.size||22)/2, t=o.text||"";
+      return `<span style="font-size:${K(z)};${o.underline?"text-decoration:underline;":""}">${t?esc(t):"&#8203;"}</span>`; }
+    get fs(){ return (this.o.size||22)/2; } }
+  class ImageRun{ constructor(o){ this.o=o; }
+    html(){ let b="", d=this.o.data; for(let i=0;i<d.length;i++) b+=String.fromCharCode(d[i]);
+      const t=this.o.transformation||{}; return `<img src="data:image/jpeg;base64,${btoa(b)}" style="width:${t.width}px;height:${t.height}px">`; }
+    get fs(){ return 11; } }
+  class PageBreak{ html(){ return PB; } }
+  class Paragraph{ constructor(o){ this.o = typeof o==="string" ? {children:[new TextRun(o)]} : (o||{}); }
+    html(){
+      const o=this.o, ch=o.children||[], sp=o.spacing||{};
+      if(ch.some(c=>c instanceof PageBreak)) return PB;
+      if(sp.lineRule==="exact" && (sp.line||0)<=40) return "";
+      const al={both:"justify",center:"center",left:"left",right:"right"}[o.alignment]||"justify";
+      const fs=Math.max(...ch.map(c=>c.fs||11), 0) || 11;
+      const lh=((sp.line||240)/240)*1.15;
+      const bb=o.border&&o.border.bottom?"border-bottom:1.5px solid #000;padding-bottom:2px;":"";
+      const inner=ch.length?ch.map(c=>c.html()).join(""):`<span style="font-size:${K(fs)}">&#8203;</span>`;
+      return `<p dir="${o.bidirectional===false?"ltr":(o.bidirectional?"rtl":"ltr")}" style="white-space:pre-wrap;margin:0;margin-top:${K((sp.before||0)/20)};margin-bottom:${K((sp.after||0)/20)};line-height:${lh.toFixed(3)};text-align:${al};text-align-last:${al==="justify"?"auto":al};font-size:${K(fs)};${bb}">${inner}</p>`;
+    } }
+  const bd = b => !b || b.style==="none" ? "none" : "1px solid #000";
+  class TableCell{ constructor(o){ this.o=o||{}; }
+    html(){ const o=this.o, b=o.borders||{}, m=o.margins||{};
+      const va=o.verticalAlign==="top"?"top":"middle";
+      return `<td${o.columnSpan>1?` colspan="${o.columnSpan}"`:""} style="border-top:${bd(b.top)};border-bottom:${bd(b.bottom)};border-left:${bd(b.left)};border-right:${bd(b.right)};${o.shading?`background:#${o.shading.fill||"D9D9D9"};`:""}vertical-align:${va};padding:${K((m.top??40)/20)} ${(m.left??80)/15}px ${K((m.bottom??40)/20)} ${(m.right??80)/15}px">${(o.children||[]).map(c=>c.html()).join("")}</td>`; } }
+  class TableRow{ constructor(o){ this.o=o||{}; }
+    html(){ const h=this.o.height; return `<tr style="${h?`height:${K(h.value/20)};`:""}page-break-inside:avoid">${(this.o.children||[]).map(c=>c.html()).join("")}</tr>`; } }
+  class Table{ constructor(o){ this.o=o||{}; }
+    html(){ const o=this.o, W=o.columnWidths||[], tot=W.reduce((a,c)=>a+c,0)||o.width.size, full=tot>=10200;
+      return `<table dir="ltr" style="width:${full?"100%":(tot/15)+"px"};table-layout:fixed;border-collapse:collapse;margin:0 auto"><colgroup>${W.map(w=>`<col style="width:${(w/tot*100).toFixed(3)}%">`).join("")}</colgroup>${(o.rows||[]).map(r=>r.html()).join("")}</table>`; } }
+  class Document{ constructor(o){ this.o=o; }
+    pages(){ const s=this.o.sections[0], m=(s.properties.page||{}).margin||{}, out=[[]];
+      s.children.forEach(c=>{ const h=c.html(); if(h===PB) out.push([]); else out[out.length-1].push(h); });
+      return out.map(p=>({html:p.join(""), margin:{top:(m.top||800)/15, bottom:(m.bottom||700)/15, left:(m.left||850)/15, right:(m.right||850)/15}})); } }
+  return { Document, Paragraph, TextRun, Table, TableRow, TableCell, ImageRun, PageBreak,
+    WidthType:{DXA:"dxa",PERCENTAGE:"pct"}, AlignmentType:{BOTH:"both",CENTER:"center",LEFT:"left",RIGHT:"right"},
+    BorderStyle:{SINGLE:"single",NONE:"none"}, VerticalAlign:{CENTER:"center",TOP:"top"}, TableLayoutType:{FIXED:"fixed"},
+    HeightRule:{ATLEAST:"atLeast"}, ShadingType:{CLEAR:"clear"}, UnderlineType:{SINGLE:"single"} };
+})();
+if (typeof module!=="undefined") module.exports={HtmlDocx};
+
+</script>
+
+<script>
+/* ================= أدوات الواجهة ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LATIN = /[0-9.\-\/]*[A-Za-z][A-Za-z0-9=\/.\-+*%]*(?:[ ]*[A-Za-z0-9=\/.\-+*%]+)*/g;
+const isoLatin = s => esc(s).replace(LATIN, m => `<bdi dir="ltr">${m}</bdi>`);
+const YEAR = new Date().getFullYear();
+const DATE_H = `&nbsp;&nbsp;/&nbsp;&nbsp;/ ${toAr(YEAR)}`;
+const STATUS = {draft:["مسودة","b-draft"],review:["بانتظار لجنة الاعتدال","b-review"],approved:["معتمد","b-approved"]};
+const KINDS = {material:"مادة",labor:"عمل (أجور)",entry:"سائل أو إنشائي"};
+const clone = o => JSON.parse(JSON.stringify(o));
+const blankRow = () => ({d:"",q:"",u:"عدد",p:"",store:false});
+function toast(msg, ms=3200){ document.querySelectorAll(".toast").forEach(e=>e.remove()); const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),ms); }
+function ask(msg, okText="نعم", danger=false){
+  return new Promise(res=>{ const m=document.createElement("div"); m.className="modal";
+    m.innerHTML=`<div class="dlg"><p>${esc(msg)}</p><div class="bar"><button class="btn sec" data-a="0">إلغاء</button><button class="btn ${danger?'ghost':''}" data-a="1">${esc(okText)}</button></div></div>`;
+    m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
+}
+function saveFile(blob, name){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},4000);
+}
+
+/* ================= التخزين: Firebase أو وضع التجربة ================= */
+const CLOUD = !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId && window.firebase);
+let fs=null, auth=null, me=null;
+// profile: {role: admin|committee|staff|pending, branch, name}
+let profile={role:"admin",branch:"qadisiyah",name:"تجربة"};
+const isAdmin = () => profile.role==="admin";
+const isCommittee = () => profile.role==="committee";
+const seesAll = () => isAdmin()||isCommittee();
+// وضع التجربة: يحفظ بالمتصفح، وإذا المتصفح ما يسمح (مثل فتح الملف من معاينة) يحفظ مؤقتاً لحد ما تسد الصفحة
+const MEM={};
+const PERSIST=(()=>{ try{ localStorage.setItem("_t","1"); const ok=localStorage.getItem("_t")==="1"; localStorage.removeItem("_t"); return ok; }catch(e){ return false; } })();
+const LS = { get(k,d){ try{ if(PERSIST) return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){} return k in MEM ? JSON.parse(MEM[k]) : d; },
+  set(k,v){ MEM[k]=JSON.stringify(v); try{ if(PERSIST) localStorage.setItem(k,MEM[k]); }catch(e){} } };
+const store = {
+  listen(cb, err){
+    const sort=a=>a.sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
+    if(CLOUD){ let q=fs.collection("kashfs"); if(!seesAll()) q=q.where("branch","==",profile.branch);
+      return q.onSnapshot(s=>cb(sort(s.docs.map(d=>({id:d.id,...d.data()})))), err); }
+    const load=()=>cb(sort(LS.get("kashfs",[]).map(k=>({branch:"qadisiyah",...k}))));
+    store._local=load; load(); return ()=>{};
+  },
+  async save(id, data){
+    if(CLOUD){ const ref=id?fs.collection("kashfs").doc(id):fs.collection("kashfs").doc(); await ref.set(data); return ref.id; }
+    id=id||("k"+Date.now()+Math.random().toString(36).slice(2,6)); const a=LS.get("kashfs",[]).filter(x=>x.id!==id); a.push({...data,id}); LS.set("kashfs",a); setTimeout(store._local,0); return id;
+  },
+  async remove(id){
+    if(CLOUD) return fs.collection("kashfs").doc(id).delete();
+    LS.set("kashfs",LS.get("kashfs",[]).filter(x=>x.id!==id)); setTimeout(store._local,0);
+  },
+  async getDoc(name){ if(CLOUD){ const d=await fs.collection("config").doc(name).get(); return d.exists?d.data():{}; } return LS.get("cfg_"+name,{}); },
+  async setDoc(name,v){ if(CLOUD) return fs.collection("config").doc(name).set(v); LS.set("cfg_"+name,v); },
+  async getConfig(){ return this.getDoc("app"); },
+  async users(){ if(CLOUD){ const s=await fs.collection("users").get(); return s.docs.map(d=>({id:d.id,...d.data()})); } return LS.get("users",[]); },
+  async setUser(id,v){ if(CLOUD) return fs.collection("users").doc(id).update(v); LS.set("users",LS.get("users",[]).map(u=>u.id===id?{...u,...v}:u)); }
+};
+/* الدخول برقم الموبايل: الرقم يتحول لإيميل داخلي (بدون رسائل SMS، مجاني) */
+const PHONE_DOMAIN="@phone.najafwater.app";
+function authId(v){
+  v=String(v||"").trim(); if(v.includes("@")) return {email:v.toLowerCase()};
+  let d=toEn(v).replace(/[^\d]/g,""); if(d.startsWith("00")) d=d.slice(2);
+  if(d.startsWith("0")) d="964"+d.slice(1); else if(d.length===10 && d[0]==="7") d="964"+d;
+  if(!/^9647\d{9}$/.test(d)) return {err:"رقم الموبايل غلط. اكتبه مثل 07801234567"};
+  return {email:d+PHONE_DOMAIN, phone:"0"+d.slice(3)};
+}
+const showId = e => String(e||"").endsWith(PHONE_DOMAIN) ? toAr("0"+e.split("@")[0].slice(3)) : (e||"");
+const myName = () => me ? (me.displayName || profile.name || showId(me.email)) : profile.name;
+
+/* إعدادات الاستمارات: المشتركة (لجنة الاعتدال) + لكل فرع */
+let CFG={app:{}, br:{}};
+async function loadCfg(){
+  try{ CFG.app=await store.getDoc("app"); }catch(e){ CFG.app={}; }
+  for(const [id] of BRANCHES){ try{ CFG.br[id]=await store.getDoc("branch_"+id); }catch(e){ CFG.br[id]={}; } }
+}
+const pick=(o,keys)=>Object.fromEntries(keys.filter(k=>o&&o[k]!==undefined&&o[k]!=="").map(k=>[k,o[k]]));
+function cfgFor(branch){
+  const b=branch||"qadisiyah";
+  return {...GLOBAL_DEFAULT, ...pick(CFG.app,GLOBAL_FIELDS.map(f=>f[0])), ...branchDefault(b), ...pick(CFG.br[b],BRANCH_FIELDS.map(f=>f[0]))};
+}
+
+/* ================= الحالة ================= */
+let list=[], loaded=false, filter="all", bfilter="all", view="list", cur=null, curId=null, dirty=false, unsub=null, selMode=false, sel=new Set(), batchMsg="";
+let seen=null; // آخر حالة لكل كشف حتى نعرف شنو الجديد (تنبيهات)
+let FORMS=null;
+function forms(){ if(!FORMS) FORMS=makeForms(window.docx, LOGO_B64); return FORMS; }
+const newBranch = () => profile.branch || (bfilter!=="all"?bfilter:"qadisiyah");
+const appTitle = () => seesAll() ? (isAdmin()?"كل الفروع":"لجنة اعتدال الأسعار") : "فرع ماء "+BRANCH_NAME(profile.branch);
+
+function start(){
+  if(!CLOUD){ me=null; $("#gear").hidden=false; loadCfg().then(listen); return; }
+  firebase.initializeApp(FIREBASE_CONFIG); auth=firebase.auth(); fs=firebase.firestore();
+  try{ fs.enablePersistence({synchronizeTabs:true}).catch(()=>{}); }catch(e){}
+  let unProf=null;
+  auth.onAuthStateChanged(async u=>{ me=u; if(unsub){unsub();unsub=null;} if(unProf){unProf();unProf=null;} seen=null;
+    $("#logout").hidden=!u; $("#gear").hidden=true;
+    if(!u){ renderLogin(); return; }
+    const admin=ADMIN_EMAILS.map(e=>e.toLowerCase().trim()).includes((u.email||"").toLowerCase());
+    const ref=fs.collection("users").doc(u.uid);
+    $("#app").innerHTML=`<div class="empty"><span class="spin"></span> جارِ التحميل…</div>`;
+    try{ const d=await ref.get(); if(!d.exists) await ref.set({email:(u.email||"").toLowerCase(),name:u.displayName||"",branch:"",role:"pending",createdAt:Date.now()}); }catch(e){}
+    unProf=ref.onSnapshot(async d=>{
+      const p=d.exists?d.data():{}; const prev=profile.role+"/"+profile.branch;
+      profile={name:p.name||u.displayName||"", role:admin?"admin":(p.role||"pending"), branch:p.branch||""};
+      if(profile.role==="pending" || (profile.role==="staff" && !profile.branch)){ if(unsub){unsub();unsub=null;} renderPending(); return; }
+      if(unsub && prev===profile.role+"/"+profile.branch) return;
+      if(unsub){unsub();unsub=null;}
+      $("#gear").hidden=!isAdmin();
+      await loadCfg(); listen();
+    }, ()=>{ if(admin){ profile={name:u.displayName||"",role:"admin",branch:""}; $("#gear").hidden=false; loadCfg().then(listen); } else renderPending(); });
+  });
+}
+function renderPending(){
+  view="pending"; $("#back").hidden=true; $("#fab").hidden=true; $("#htitle").textContent="استمارات فروع ماء النجف";
+  $("#app").innerHTML=`<div class="card login"><h2>حسابك بانتظار الموافقة</h2><div class="hint">سجّلت بـ <b dir="ltr">${esc(showId(me&&me.email))}</b>. مسؤول التطبيق لازم يحدد فرعك (القادسيه، المشخاب، المناذره). أول ما يوافق، التطبيق ينفتح وحده.</div></div>`;
+}
+function listen(){
+  loaded=false; renderList();
+  const timer=setTimeout(()=>{ if(!loaded){ loaded=true; renderList("تعذّر الوصول للبيانات حالياً، تأكد من الإنترنت."); } },10000);
+  unsub=store.listen(a=>{ clearTimeout(timer); loaded=true; notifyChanges(a); list=a;
+    if(view==="list") renderList(); else if(view==="edit" && curId && !dirty){ const f=list.find(x=>x.id===curId); if(f){ cur=clone(f); renderEdit(); } } },
+  e=>{ clearTimeout(timer); loaded=true; renderList(e&&e.code==="permission-denied"?"ما عندك صلاحية تشوف الكشوفات. اطلب من مسؤول التطبيق يحدد فرعك.":"تعذّر تحميل الكشوفات."); });
+}
+
+/* ================= التنبيهات داخل التطبيق ================= */
+function notifyChanges(a){
+  const now={}; a.forEach(k=>now[k.id]=k.status);
+  if(seen){
+    const toCommittee=a.filter(k=>k.status==="review" && seen[k.id]!=="review");
+    const approved=a.filter(k=>k.status==="approved" && seen[k.id]==="review");
+    const msgs=[];
+    if(seesAll() && toCommittee.length) msgs.push(`وصل ${toAr(toCommittee.length)} كشف جديد للجنة الاعتدال${toCommittee[0].branch?" من فرع "+BRANCH_NAME(toCommittee[0].branch):""}`);
+    if(!isCommittee() && approved.length) msgs.push(`انعتمد ${toAr(approved.length)} كشف من لجنة الاعتدال`);
+    if(msgs.length){ const m=msgs.join(" · "); toast(m,6000);
+      try{ if(document.hidden && "Notification" in window && Notification.permission==="granted") new Notification("استمارات الفروع",{body:m}); }catch(e){} }
+  }
+  seen=now;
+}
+function askNotifPerm(){ try{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); }catch(e){} }
+
+/* واتساب: رسالة جاهزة */
+function whatsapp(text){
+  const n=String(CFG.app.whatsapp||"").replace(/[^\d]/g,"");
+  const url=(n?`https://wa.me/${n}`:"https://wa.me/")+"?text="+encodeURIComponent(text+"\n"+location.href.split("#")[0]);
+  const a=document.createElement("a"); a.href=url; a.target="_blank"; a.rel="noopener"; document.body.appendChild(a); a.click(); a.remove();
+}
+const kashfLine = k => `${k.branch?"فرع "+BRANCH_NAME(k.branch)+" — ":""}${k.no?"كشف رقم "+toAr(k.no)+": ":""}${k.title} — المجموع ${fmt(total(k))} دينار`;
+
+/* ================= الدخول ================= */
+function renderLogin(mode="in"){
+  view="login"; $("#back").hidden=true; $("#fab").hidden=true; $("#htitle").textContent="استمارات فروع ماء النجف";
+  const up=mode==="up";
+  $("#app").innerHTML=`<div class="card login"><h2>${up?"إنشاء حساب":"تسجيل الدخول"}</h2><div class="hint">لموظفي فروع القادسيه والمشخاب والمناذره. ${up?"بعد ما تسوي الحساب، مسؤول التطبيق يحدد فرعك.":""}</div>
+    ${up?`<label class="f">الاسم</label><input class="i" id="ln" autocomplete="name">`:""}
+    <label class="f">رقم الموبايل</label><input class="i" id="le" type="text" inputmode="tel" dir="ltr" autocomplete="username" placeholder="07801234567">
+    <div class="hint">المسؤول يكدر يكتب إيميله بدل الرقم.</div>
+    <label class="f">كلمة السر</label><input class="i" id="lp" type="password" dir="ltr" autocomplete="${up?"new-password":"current-password"}">
+    ${up?`<div class="hint">٦ أحرف أو أرقام على الأقل. احفظها زين، لأن ماكو رسالة لتغييرها.</div>`:""}
+    <div class="err" id="lerr"></div>
+    <button class="btn" id="lgo">${up?"إنشاء الحساب":"دخول"}</button>
+    <div class="bar" style="justify-content:space-between;margin-top:8px"><button class="link" id="lsw">${up?"عندي حساب، دخول":"ما عندي حساب، إنشاء حساب"}</button>${up?"":`<button class="link" id="lfg">نسيت كلمة السر</button>`}</div></div>`;
+  const err=t=>$("#lerr").textContent=t;
+  const msg=e=>({"auth/invalid-email":"الرقم أو الإيميل غلط","auth/missing-password":"اكتب كلمة السر","auth/weak-password":"كلمة السر لازم ٦ أحرف أو أكثر","auth/email-already-in-use":"هذا الرقم عنده حساب، سوّ دخول",
+    "auth/invalid-credential":"الرقم أو كلمة السر غلط","auth/wrong-password":"كلمة السر غلط","auth/user-not-found":"ماكو حساب بهذا الرقم","auth/too-many-requests":"محاولات كثيرة، انتظر شوية","auth/network-request-failed":"ماكو إنترنت",
+    "auth/unauthorized-domain":"لازم تضيف رابط الموقع بـ Authorized domains في Firebase","auth/operation-not-allowed":"لازم تفعّل Email/Password بـ Firebase Authentication"}[e.code]||"صار خطأ، حاول مرة ثانية ("+(e.code||"")+")");
+  $("#lsw").onclick=()=>renderLogin(up?"in":"up");
+  const fg=$("#lfg"); if(fg) fg.onclick=async()=>{ const id=authId($("#le").value);
+    if(id.phone||id.err){ err("للدخول بالرقم: اطلب من مسؤول التطبيق يحذف حسابك من Firebase، وبعدين سوّ حساب جديد بنفس الرقم."); return; }
+    try{ await auth.sendPasswordResetEmail(id.email); err(""); toast("انرسل رابط تغيير كلمة السر لإيميلك",4500);}catch(x){err(msg(x));} };
+  $("#lgo").onclick=async()=>{
+    const id=authId($("#le").value), p=$("#lp").value, b=$("#lgo"); err("");
+    if(id.err) return err(id.err);
+    b.disabled=true;
+    try{
+      if(up){ const n=$("#ln").value.trim(); if(!n){ b.disabled=false; return err("اكتب اسمك"); } const c=await auth.createUserWithEmailAndPassword(id.email,p); await c.user.updateProfile({displayName:n});
+        try{ await fs.collection("users").doc(c.user.uid).set({email:id.email,phone:id.phone||"",name:n,branch:"",role:"pending",createdAt:Date.now()}); }catch(x){} }
+      else await auth.signInWithEmailAndPassword(id.email,p);
+    }catch(x){ err(msg(x)); b.disabled=false; }
+  };
+}
+$("#logout").onclick=async()=>{ if(await ask("تطلع من حسابك؟","خروج")) auth.signOut(); };
+
+/* ================= الإدارة (للمسؤول بس) ================= */
+let admTab="users";
+$("#gear").onclick=async()=>{ if(dirty && !(await ask("عندك تعديلات ما محفوظة. تطلع بدون حفظ؟","اطلع",true))) return; dirty=false; renderAdmin(); };
+async function renderAdmin(){
+  view="settings"; $("#back").hidden=false; $("#fab").hidden=true; $("#htitle").textContent="الإدارة";
+  const tabs=[["users","الموظفين"],["branches","إعدادات الفروع"],["app","إعدادات عامة"]];
+  let h=`<div class="filters">${tabs.map(([k,t])=>`<button class="chip ${admTab===k?"on":""}" data-tab="${k}">${t}</button>`).join("")}</div><div id="adm"><div class="empty"><span class="spin"></span></div></div>`;
+  $("#app").innerHTML=h;
+  $("#app").querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{admTab=b.dataset.tab; renderAdmin();});
+  const box=$("#adm");
+  if(admTab==="users"){
+    let us=[]; try{ us=await store.users(); }catch(e){ box.innerHTML=`<div class="note warn">ما كدرت أجيب الموظفين. تأكد من قواعد Firebase.</div>`; return; }
+    us.sort((a,b)=>(a.role==="pending"?0:1)-(b.role==="pending"?0:1)||(a.createdAt||0)-(b.createdAt||0));
+    const pend=us.filter(u=>u.role==="pending").length;
+    let x=`<div class="note">كل موظف يسوي حساب برقم موبايله، وأنت هنا تحدد فرعه وصلاحيته. «لجنة الاعتدال» تشوف كشوفات كل الفروع.${pend?`<br><b>${toAr(pend)} بانتظار موافقتك.</b>`:""}</div>`;
+    if(!us.length) x+=`<div class="empty">ماكو حسابات بعد. خلّي الموظفين يفتحون الرابط ويسوون حساب.</div>`;
+    us.forEach(u=>{ x+=`<div class="card" data-u="${esc(u.id)}"><b>${esc(u.name||"بدون اسم")}</b> <span class="hint" dir="ltr">${esc(u.phone?toAr(u.phone):showId(u.email))}</span>
+      <div class="grid"><div><label class="f">الفرع</label><select class="i" data-k="branch"><option value="">—</option>${BRANCHES.map(([id,n])=>`<option value="${id}" ${u.branch===id?"selected":""}>${n}</option>`).join("")}</select></div>
+      <div><label class="f">الصلاحية</label><select class="i" data-k="role">${[["pending","بانتظار الموافقة"],["staff","موظف فرع"],["committee","لجنة الاعتدال"],["blocked","موقوف"]].map(([v,t])=>`<option value="${v}" ${u.role===v?"selected":""}>${t}</option>`).join("")}</select></div></div></div>`; });
+    box.innerHTML=x;
+    box.querySelectorAll("[data-u] select").forEach(s=>s.onchange=async()=>{ const c=s.closest("[data-u]"), v={branch:c.querySelector('[data-k="branch"]').value, role:c.querySelector('[data-k="role"]').value};
+      if(v.role==="staff"&&!v.branch){ toast("حدد الفرع أولاً"); return; }
+      try{ await store.setUser(c.dataset.u,v); toast("انحفظ ✓"); }catch(e){ toast("ما انحفظ"); } });
+  }
+  if(admTab==="branches"){
+    let x=`<div class="note">هاي النصوص والأسماء تنكتب بالاستمارات. كل لجنة: سطر لكل شخص بالشكل <b>اللقب|الاسم|الصفة</b> (مثال: المهندس|علي حسن|عضو).</div><div class="filters">${BRANCHES.map(([id,n])=>`<button class="chip ${(admBr||"qadisiyah")===id?"on":""}" data-br="${id}">${n}</button>`).join("")}</div>`;
+    const b=admBr||"qadisiyah", c=cfgFor(b);
+    x+=`<div class="card">`+BRANCH_FIELDS.map(([k,t,ty])=>`<label class="f">${t}</label>${ty==="lines"?`<textarea class="i" data-k="${k}" rows="3">${esc(c[k])}</textarea>`:`<input class="i" data-k="${k}" value="${esc(c[k])}">`}`).join("")+`<button class="btn" id="bsave">حفظ إعدادات فرع ${BRANCH_NAME(b)}</button><button class="btn sec" id="breset">رجوع للافتراضي</button></div>`;
+    box.innerHTML=x;
+    box.querySelectorAll("[data-br]").forEach(e=>e.onclick=()=>{admBr=e.dataset.br; renderAdmin();});
+    $("#bsave").onclick=async()=>{ const v={}; box.querySelectorAll(".card [data-k]").forEach(e=>v[e.dataset.k]=e.value.trim()); try{ await store.setDoc("branch_"+b,v); CFG.br[b]=v; toast("انحفظ ✓"); }catch(e){ toast("ما انحفظ"); } };
+    $("#breset").onclick=async()=>{ if(!(await ask("ترجع إعدادات هذا الفرع للافتراضي؟","رجوع",true))) return; try{ await store.setDoc("branch_"+b,{}); CFG.br[b]={}; renderAdmin(); }catch(e){ toast("ما انحفظ"); } };
+  }
+  if(admTab==="app"){
+    const c={...GLOBAL_DEFAULT,...CFG.app};
+    box.innerHTML=`<div class="card"><h3>قراءة صورة الكشف (اختياري)</h3>
+      <div class="hint">مفتاح مجاني من <b dir="ltr">aistudio.google.com/apikey</b>. بدونه تنكتب الفقرات باليد. ملاحظة: بالخطة المجانية Google ممكن تستخدم الصور لتحسين خدماتها.</div>
+      <label class="f">مفتاح Gemini</label><input class="i" id="gk" dir="ltr" value="${esc(c.geminiKey||"")}" placeholder="AQ.… أو AIza…">
+      <label class="f">الموديل (اتركه إذا ما تعرف)</label><input class="i" id="gm" dir="ltr" value="${esc(c.geminiModel||"")}" placeholder="gemini-flash-latest"></div>
+      <div class="card"><h3>إشعار واتساب للجنة الاعتدال</h3><div class="hint">لما فرع يرسل كشف للجنة، ينفتح واتساب برسالة جاهزة. إذا تكتب رقم (مثل 9647801234567) تروح الرسالة إله مباشرة، وإذا تتركه فارغ تختار الشخص أو الكروب بنفسك.</div>
+      <label class="f">رقم واتساب اللجنة (اختياري)</label><input class="i" id="wa" dir="ltr" inputmode="tel" value="${esc(c.whatsapp||"")}"></div>
+      <div class="card"><h3>لجنة اعتدال الأسعار (محضر التسعير لكل الفروع)</h3>${GLOBAL_FIELDS.map(([k,t,ty])=>`<label class="f">${t}</label>${ty==="lines"?`<textarea class="i" data-g="${k}" rows="4">${esc(c[k])}</textarea>`:`<input class="i" data-g="${k}" value="${esc(c[k])}">`}`).join("")}</div>
+      <button class="btn" id="gs">حفظ</button>`;
+    $("#gs").onclick=async()=>{ const v={...CFG.app,geminiKey:$("#gk").value.trim(),geminiModel:$("#gm").value.trim(),whatsapp:$("#wa").value.trim()};
+      box.querySelectorAll("[data-g]").forEach(e=>v[e.dataset.g]=e.value.trim());
+      try{ await store.setDoc("app",v); CFG.app=v; toast(CLOUD||PERSIST?"انحفظ ✓":"انحفظ مؤقتاً (معاينة الملف ما تحفظ بعد ما تسدها)",4500); }
+      catch(e){ toast(e&&e.code==="permission-denied"?"ما عندك صلاحية: إيميلك لازم يكون نفسه بملف التطبيق وبقواعد Firebase":"ما انحفظ: "+((e&&e.code)||"تأكد من الإنترنت"),6000); } };
+  }
+}
+let admBr="qadisiyah";
+
+/* ================= القائمة ================= */
+function renderList(errMsg){
+  view="list"; curId=null; cur=null; dirty=false;
+  $("#back").hidden=true; $("#htitle").textContent=appTitle(); $("#fab").hidden=!loaded||isCommittee()&&!selMode;
+  const app=$("#app");
+  if(!loaded){ app.innerHTML=`<div class="empty"><span class="spin"></span> جارِ التحميل…</div>`; return; }
+  const inB=list.filter(k=>bfilter==="all"||k.branch===bfilter);
+  const counts={all:inB.length,draft:0,review:0,approved:0}; inB.forEach(k=>counts[k.status]=(counts[k.status]||0)+1);
+  if(isCommittee() && filter==="all" && !renderList._init){ filter="review"; renderList._init=1; }
+  const shown=inB.filter(k=>filter==="all"||k.status===filter);
+  let h="";
+  if(!CLOUD) h+=`<div class="note warn">${PERSIST?"وضع التجربة: الكشوفات والإعدادات تنحفظ على هذا الجهاز بس.":"وضع التجربة من معاينة الملف: هنا ما ينحفظ شي بعد ما تسد الصفحة (حتى المفتاح)."} حتى يشتغل بين الموظفين وينحفظ، لازم يترفع ويرتبط بـ Firebase.</div>`;
+  if(errMsg) h+=`<div class="note warn">${esc(errMsg)}</div>`;
+  if(isCommittee() && counts.review) h+=`<div class="note warn"><b>${toAr(counts.review)} كشف بانتظار تدقيقكم.</b></div>`;
+  if("Notification" in window && Notification.permission==="default" && CLOUD) h+=`<button class="link" id="bnotif" style="margin-bottom:6px">🔔 فعّل التنبيهات بهذا الجهاز</button>`;
+  if(!isCommittee()) h+=`<div class="bar" style="margin-bottom:10px"><button class="btn sec" id="bphoto" style="margin:0">📷 تصوير كشوفات</button><button class="btn sec" id="bsel" style="margin:0">${selMode?"إلغاء التحديد":"☑︎ استمارات لعدة كشوفات"}</button></div><div class="hint" id="batch" style="margin:-4px 0 10px">${esc(batchMsg)}</div>`;
+  if(selMode) h+=`<div class="note">حدد كشوفات من نفس الفرع حتى تطلع استماراتها سوا (محضر استلام بأقسام، ومطابقة ومخازن وتعزيز مجمّعة)، وبعدين اضغط الزر تحت.</div>`;
+  if(seesAll()) h+=`<div class="filters">${[["all","كل الفروع"],...BRANCHES].map(([id,n])=>`<button class="chip ${bfilter===id?"on":""}" data-bf="${id}">${n}</button>`).join("")}</div>`;
+  h+=`<div class="filters">`+[["all","الكل"],["draft","مسودات"],["review","بانتظار اللجنة"],["approved","معتمدة"]].map(([k,t])=>`<button class="chip ${filter===k?'on':''}" data-f="${k}">${t} ${toAr(counts[k]||0)}</button>`).join("")+`</div>`;
+  if(!shown.length) h+=`<div class="empty">${inB.length?"ماكو كشوفات بهذا التصنيف.":isCommittee()?"ماكو كشوفات بعد.":"ماكو كشوفات بعد.<br>اضغط «كشف جديد» أو «تصوير كشوفات»."}</div>`;
+  shown.forEach(k=>{ const [st,cl]=STATUS[k.status]||STATUS.draft;
+    h+=`<div class="card item" data-id="${esc(k.id)}" style="${selMode&&sel.has(k.id)?"border-color:var(--blue);background:#eef6fb":""}"><div class="t">${selMode?`<input type="checkbox" ${sel.has(k.id)?"checked":""} style="margin-left:8px;pointer-events:none">`:""}${k.no?`كشف ${esc(toAr(k.no))} — `:""}${esc(k.title||"بدون عنوان")}</div>
+      <div class="m"><span class="badge ${cl}">${st}</span>${seesAll()&&k.branch?`<span class="badge b-draft">${esc(BRANCH_NAME(k.branch))}</span>`:""}<span>${fmt(total(k))} دينار</span>${k.vehicle?"<span>· آلية</span>":""}${k.createdByName?`<span>· ${esc(k.createdByName)}</span>`:""}</div></div>`; });
+  app.innerHTML=h;
+  if(selMode){ $("#fab").hidden=false; $("#fab").textContent=`استمارات ${toAr(sel.size)} كشوفات`; } else $("#fab").textContent="+ كشف جديد";
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f;};
+  on("bphoto",()=>$("#phm").click());
+  on("bsel",()=>{ selMode=!selMode; sel.clear(); renderList(); });
+  on("bnotif",()=>{ askNotifPerm(); setTimeout(renderList,1500); });
+  app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{filter=b.dataset.f;renderList();});
+  app.querySelectorAll("[data-bf]").forEach(b=>b.onclick=()=>{bfilter=b.dataset.bf;renderList();});
+  app.querySelectorAll(".item").forEach(c=>c.onclick=()=>{ const id=c.dataset.id;
+    if(selMode){ sel.has(id)?sel.delete(id):sel.add(id); renderList(); return; }
+    const f=list.find(x=>x.id===id); if(!f) return; curId=f.id; cur=clone(f); dirty=false; renderEdit(); scrollTo(0,0); });
+}
+function renderGroup(){
+  const ks=list.filter(k=>sel.has(k.id)).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  if(!ks.length){ toast("حدد كشف واحد على الأقل"); return; }
+  if(new Set(ks.map(k=>k.branch||"")).size>1){ toast("حدد كشوفات من نفس الفرع بس"); return; }
+  view="group"; $("#back").hidden=false; $("#fab").hidden=true; $("#htitle").textContent="استمارات مجمّعة";
+  const T=ks.reduce((s,k)=>s+total(k),0);
+  let h=`<div class="card"><h3>${toAr(ks.length)} كشوفات — فرع ${esc(BRANCH_NAME(ks[0].branch))} — المجموع ${fmt(T)} دينار</h3>`+ks.map((k,i)=>`<div class="hint">${toAr(i+1)}- ${k.no?`كشف ${esc(toAr(k.no))}: `:""}${esc(k.title)} (${fmt(total(k))})${k.status!=="approved"?` <span class="badge b-review">${STATUS[k.status][0]}</span>`:""}</div>`).join("")+`</div>`;
+  h+=formsPanel(true, ks, "");
+  $("#app").innerHTML=h; updFormInfo(ks); bindForms(ks,"_majmoo");
+}
+$("#fab").onclick=()=>{ if(selMode){ renderGroup(); return; } curId=null; cur={no:"",title:"",rows:[blankRow()],status:"draft",tasirNo:"",branch:newBranch()}; dirty=false; renderEdit(); scrollTo(0,0); };
+$("#back").onclick=async()=>{ if(dirty && !(await ask("عندك تعديلات ما محفوظة. تطلع بدون حفظ؟","اطلع",true))) return; if(view!=="group"){ selMode=false; sel.clear(); } renderList(); };
+
+/* ================= المحرر ================= */
+function origRow(i){ return cur.orig && cur.orig.rows ? cur.orig.rows[cur.rows[i]._o] : undefined; }
+function renderEdit(){
+  view="edit"; $("#back").hidden=false; $("#fab").hidden=true;
+  const k=cur, st=k.status||"draft", appr=st==="approved", rev=st==="review";
+  const canEdit=(st==="draft"&&!isCommittee())||(rev&&seesAll()), ro=!canEdit;
+  $("#htitle").textContent = curId ? (rev?(seesAll()?"تدقيق لجنة الاعتدال":"بانتظار اللجنة"):appr?"كشف معتمد":"تعديل الكشف") : "كشف جديد";
+  const [stt,cl]=STATUS[st];
+  const tChanged = rev && k.orig && k.orig.title!==k.title;
+  let h=`<div class="card"><span class="badge ${cl}">${stt}</span> ${isAdmin()&&!curId?`<select class="i" id="kbr" style="width:auto;display:inline-block;padding:3px 8px">${BRANCHES.map(([id,n])=>`<option value="${id}" ${k.branch===id?"selected":""}>فرع ${n}</option>`).join("")}</select>`:`<span class="badge b-draft">فرع ${esc(BRANCH_NAME(k.branch))}</span>`}`;
+  if(k.createdByName) h+=` <span class="hint">كتبه: ${esc(k.createdByName)}</span>`;
+  if(rev && !seesAll()) h+=`<div class="hint">الكشف عند لجنة اعتدال الأسعار. أول ما تعتمده يوصلك تنبيه بالتطبيق.</div>`;
+  if(rev && seesAll()) h+=`<div class="hint">لجنة اعتدال الأسعار: تكدر تعدّل أي شي بالفقرات أو تضيف وتحذف فقرات. اللي يتغيّر يتلوّن ويبين تحته الأصل. بعدين اضغط «اعتماد».</div>`;
+  if(appr) h+=`<div class="hint">معتمد${k.approvedByName?` من ${esc(k.approvedByName)}`:""}. الاستمارات تحت.</div>`;
+  h+=`</div>`;
+  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph">📷 صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويعبّي النطاق والفقرات. إذا الكشف أكثر من ورقة، اختار كل صفحاته سوا.</div>`;
+  h+=`<div class="card"><div class="grid"><div><label class="f">رقم الكشف</label>${ro?`<div class="v">${esc(toAr(k.no))||"—"}</div>`:`<input class="i" id="no" inputmode="numeric" value="${esc(k.no)}">`}</div>
+     <div><label class="f">رقم محضر التسعير</label>${ro?`<div class="v">${esc(toAr(k.tasirNo))||"—"}</div>`:`<input class="i" id="tno" inputmode="numeric" value="${esc(k.tasirNo)}" placeholder="يملّيه رئيس اللجنة">`}</div></div>
+     <label class="f">نطاق الكشف (اسم العمل)</label>${ro?`<div class="v">${esc(k.title)}</div>`:`<textarea class="i ${tChanged?'changed':''}" id="title" placeholder="مثال: صيانة مضخة الدفع الأولى نوع (ebara) التابعة إلى مشروع ماء القادسية المركزي">${esc(k.title)}</textarea>${tChanged?`<div class="chg">${esc(k.orig.title)}</div>`:""}`}
+     <label class="chk"><input type="checkbox" id="veh" ${k.vehicle?"checked":""} ${ro?"disabled":""}> كشف آلية (تثمين آليات)</label></div>`;
+  h+=`<div id="rows"></div>`;
+  if(!ro) h+=`<button class="btn sec" id="add">+ إضافة فقرة</button>`;
+  if(rev && k.orig && k.orig.rows){ const removed=k.orig.rows.filter((r,j)=>!k.rows.some(x=>x._o===j)); if(removed.length) h+=`<div class="note warn" style="margin-top:10px">فقرات انحذفت: ${removed.map(r=>esc(r.d)).join("، ")}</div>`; }
+  h+=`<div class="card" style="margin-top:12px"><div class="sum"><span>المجموع</span><span id="tot"></span></div><div class="hint" id="totw"></div></div>`;
+  h+=`<details class="card"><summary style="cursor:pointer;color:var(--blue);font-weight:600">استماره الاعمال (اختياري)</summary>
+     <label class="f">تقرير لجنة تحديد الاعطال</label>${ro?`<div class="v">${esc(k.faults||autoFaults(k))}</div>`:`<textarea class="i" id="faults" placeholder="${esc(autoFaults(k))}">${esc(k.faults||"")}</textarea><div class="hint">إذا تتركه فارغ ينكتب مثل النص الرمادي.</div>`}
+     <label class="f">مقدم الطلب</label>${ro?`<div class="v">${esc(k.submitter||cfgFor(k.branch).submitter)}</div>`:`<input class="i" id="sub" value="${esc(k.submitter||"")}" placeholder="${esc(cfgFor(k.branch).submitter)}">`}</details>`;
+  if(st==="draft"&&canEdit) h+=`<div class="bar"><button class="btn sec" id="save">حفظ مسودة</button><button class="btn" id="send">إرسال للجنة الاعتدال</button></div>`;
+  if(rev&&!seesAll()) h+=`<button class="btn sec" id="wa">💬 ذكّر اللجنة بالواتساب</button>`;
+  if(rev&&seesAll()) h+=`<div class="bar"><button class="btn sec" id="save">حفظ التعديلات</button><button class="btn ok" id="appr">اعتماد</button></div><button class="btn sec" id="toDraft">إرجاعه مسودة لكاتب الكشف</button>`;
+  h+=formsPanel(appr,cur);
+  if(appr&&seesAll()) h+=`<button class="btn sec" id="reopen">إعادة فتحه للجنة</button>`;
+  if(curId&&(isAdmin()||(st==="draft"&&!isCommittee()))) h+=`<button class="btn ghost" id="del" style="margin-top:22px">حذف الكشف</button>`;
+  $("#app").innerHTML=h; renderRows(); bindEdit();
+}
+const FORM_NAMES={kashf:"الكشف",istimara:"استماره اعمال",tasir:"محضر التسعير",mahdar:"محضر فحص واستلام",mutabaqa:"محضر فحص ومطابقة",idkhal_ikhraj:"طلب إدخال وإخراج",idkhal_mustahlaka:"طلب إدخال مواد مستهلكة",tathmeen:"محضر تثمين",tathmeen_aliyat:"محضر تثمين آليات",istihlak:"قرار إستهلاك",tazeez:"استماره تعزيز المستديمه"};
+const STAGE1=["kashf","istimara","tasir"], STAGE2=["mahdar","mutabaqa","idkhal_ikhraj","idkhal_mustahlaka","tathmeen","istihlak","tazeez"];
+const FILE_EN={kashf:"kashf",tasir:"tasir",istimara:"istimarat_aamal",mahdar:"mahdar_istilam",mutabaqa:"mutabaqa",idkhal_ikhraj:"idkhal_ikhraj",idkhal_mustahlaka:"mustahlaka",tathmeen:"tathmeen",tathmeen_aliyat:"tathmeen_aliyat",istihlak:"qarar_istihlak",tazeez:"taziz"};
+// ks = الكشف الحالي أو مجموعة كشوفات. يرجع [formId, J] (التثمين يصير عادي/آليات حسب الكشوفات)
+function jobsFor(ids, ks, skipEmpty){
+  const arr=Array.isArray(ks)?ks:[ks], out=[];
+  ids.forEach(id=>{
+    const fl = id==="tathmeen" ? [arr.some(k=>!k.vehicle)?"tathmeen":null, arr.some(k=>k.vehicle)?"tathmeen_aliyat":null].filter(Boolean) : [id];
+    const br=(Array.isArray(ks)?ks[0]:ks).branch;
+    fl.forEach(f=>{ const J=formData(f,ks,cfgFor(br)); if(skipEmpty && J.items && !J.items.length) return; out.push([f,J]); });
+  });
+  return out;
+}
+function formsPanel(ro, ks, label){
+  const multi=Array.isArray(ks);
+  let h=`<div class="card" style="margin-top:14px"><h3>الاستمارات${label?" — "+esc(label):""}</h3>${ro||multi?"":`<div class="hint">تكدر تنزّلها الحين للمعاينة، والنسخة الرسمية بعد الاعتماد.</div>`}`;
+  const group=(title,ids,allId)=>{ h+=`<div class="hint" style="margin-top:12px;font-weight:700;color:var(--ink)">${title}</div>`;
+    ids.forEach(id=>{ h+=`<div class="fl"><span>${FORM_NAMES[id]}<small id="fi-${id}"></small></span><button class="btn sec" data-pdf="${id}">PDF</button><button class="btn" data-word="${id}">Word</button></div>`; });
+    h+=`<button class="btn sec" data-allpdf="${allId}">📄 كلها PDF بملف واحد (للطباعة)</button>`; };
+  if(!multi) group("قبل التنفيذ",STAGE1,"s1");
+  group(multi?"استمارات مجمّعة لكل الكشوفات المحددة":"بعد التنفيذ",STAGE2,"s2");
+  return h+`</div>`;
+}
+function updFormInfo(ks){
+  ks=ks||cur; const arr=Array.isArray(ks)?ks:[ks];
+  const m=arr.reduce((a,k)=>a+materials(k).length,0), e=arr.reduce((a,k)=>a+entries(k).length,0);
+  const set=(id,t)=>{const el=document.getElementById("fi-"+id); if(el) el.textContent=t;};
+  set("mutabaqa",e?`${toAr(e)} مادة`:"ماكو مواد"); set("idkhal_ikhraj",e?`${toAr(e)} مادة`:"ماكو مواد");
+  ["idkhal_mustahlaka","istihlak"].forEach(id=>set(id,m?`${toAr(m)} مادة`:"ماكو مواد"));
+  const nv=arr.filter(k=>!k.vehicle).length, v=arr.length-nv;
+  set("tathmeen",(m?`${toAr(m)} مادة · `:"")+(nv&&v?"عادي + آليات (ورقتين)":v?"آليات":"عادي"));
+  if(arr.length>1) set("mahdar",`${toAr(arr.length)} أقسام`);
+}
+function bindForms(ks, base){
+  const app=$("#app");
+  app.querySelectorAll("[data-word]").forEach(b=>b.onclick=()=>makeWord(b.dataset.word,ks,base,b));
+  app.querySelectorAll("[data-pdf]").forEach(b=>b.onclick=async()=>{
+    const jobs=jobsFor([b.dataset.pdf],ks,false);
+    if(jobs.some(j=>j[1].items&&!j[1].items.length) && !(await ask("ماكو مواد لهذه الاستمارة. تطلعها فارغة؟","نعم"))) return;
+    showPdf(jobs, FORM_NAMES[b.dataset.pdf], FILE_EN[b.dataset.pdf]+base+".pdf"); });
+  app.querySelectorAll("[data-allpdf]").forEach(b=>b.onclick=()=>{
+    const ids=b.dataset.allpdf==="s1"?STAGE1:STAGE2, jobs=jobsFor(ids,ks,true);
+    showPdf(jobs, b.dataset.allpdf==="s1"?"استمارات قبل التنفيذ":"استمارات بعد التنفيذ", (b.dataset.allpdf==="s1"?"qabl_altanfeeth":"baad_altanfeeth")+base+".pdf"); });
+}
+function renderRows(){
+  const k=cur, rev=k.status==="review", ro=!((k.status==="draft"&&!isCommittee())||(rev&&seesAll()));
+  let h="";
+  k.rows.forEach((r,i)=>{
+    const kd=kindOf(r);
+    if(ro){ h+=`<div class="row"><div class="hd"><span>فقرة ${toAr(i+1)} <span class="kind">· ${KINDS[kd]}</span></span></div><div class="v" style="margin-top:6px">${esc(r.d)}</div>
+      <div class="hint">${fmt(num(r.q))} ${esc(r.u)} × ${r.store?"اخراج مخزني":fmt(num(r.p))+" = "+fmt(rowTotal(r))}</div></div>`; return; }
+    const o = rev ? origRow(i) : undefined, isNew = rev && k.orig && o===undefined;
+    const ch = f => o && String(o[f]??"")!==String(r[f]??"") && !(f==="p"&&(r.store||o.store)) && !((f==="q"||f==="p")&&num(o[f])===num(r[f]));
+    const was = (f,show) => ch(f)?`<div class="chg">${esc(show!==undefined?show:o[f])}</div>`:"";
+    h+=`<div class="row ${isNew?'newrow':''}" data-i="${i}"><div class="hd"><span>فقرة ${toAr(i+1)}${isNew?" (جديدة)":""}</span><button class="x" data-del="${i}">حذف</button></div>
+      <label class="f">تفاصيل العمل</label><textarea class="i ${ch("d")?'changed':''}" data-k="d">${esc(r.d)}</textarea>${was("d")}
+      <div class="grid3"><div><label class="f">الكمية</label><input class="i ${ch("q")?'changed':''}" data-k="q" inputmode="decimal" value="${esc(r.q)}">${was("q",o&&fmt(num(o.q)))}</div>
+      <div><label class="f">الوحدة</label><input class="i ${ch("u")?'changed':''}" data-k="u" value="${esc(r.u)}" list="units">${was("u")}</div>
+      <div><label class="f">السعر</label><input class="i ${ch("p")?'changed':''}" data-k="p" inputmode="decimal" value="${r.store?"":esc(r.p)}" ${r.store?'disabled placeholder="اخراج مخزني"':""}>${was("p",o&&fmt(num(o.p)))}</div></div>
+      <label class="chk"><input type="checkbox" data-k="store" ${r.store?"checked":""}> اخراج مخزني${o&&!!o.store!==!!r.store?` <span class="chg" style="margin:0">${o.store?"اخراج مخزني":"بسعر"}</span>`:""}</label>
+      <div class="hint" data-rt>السعر الكلي: ${r.store?"اخراج مخزني":fmt(rowTotal(r))}</div>
+      <details class="st"><summary>للمخازن: <span data-kl>${KINDS[kd]}${kd==="material"?" · "+esc(sName(r)):""}</span></summary>
+        <label class="f">نوع الفقرة</label><select class="i" data-k="kind"><option value="">تلقائي (${KINDS[autoKind(r)]})</option>${Object.entries(KINDS).map(([v,t])=>`<option value="${v}" ${r.kind===v?"selected":""}>${t}</option>`).join("")}</select>
+        <div class="hint">«عمل» ما ينكتب بأي استمارة مخازن. «سائل أو إنشائي» ينكتب بالإدخال والمطابقة بس.</div>
+        <label class="f">اسم المادة بالمستهلكة والتثمين والقرار</label><input class="i" data-k="sname" value="${esc(r.sname||"")}" placeholder="${esc(autoSName(r))}">
+        <div class="grid"><div><label class="f">الوزن التقديري (كغم)</label><input class="i" data-k="w" inputmode="decimal" value="${esc(r.w||"")}"></div>
+        <div><label class="f">نوع المادة (للتثمين)</label><input class="i" data-k="metal" value="${esc(r.metal||"")}" placeholder="${esc(autoMetal(r))}" list="metals"></div></div>
+      </details></div>`;
+  });
+  h+=`<datalist id="units"><option>عدد<option>متر<option>كغم<option>لتر<option>كيلواط<option>م٣<option>م٢<option>طقم<option>مقطوعة</datalist><datalist id="metals"><option>حديد<option>نحاس<option>بلاستك<option>براص<option>مطاط</datalist>`;
+  $("#rows").innerHTML=h; updTot(); updFormInfo();
+}
+function updTot(){ const t=total(cur); $("#tot").textContent=fmt(t)+" دينار"; $("#totw").textContent=t?`فقط ${words(t)} دينار لاغيرها`:""; }
+function markChange(el,i){
+  if(cur.status!=="review") return; const o=origRow(i), f=el.dataset.k; if(!o||!["d","q","u","p"].includes(f)) return;
+  const r=cur.rows[i], c=String(o[f]??"")!==String(r[f]??"") && !((f==="q"||f==="p")&&num(o[f])===num(r[f]));
+  el.classList.toggle("changed",c);
+  let n=el.nextElementSibling; if(n && !n.classList.contains("chg")) n=null;
+  if(c && !n){ n=document.createElement("div"); n.className="chg"; n.textContent=(f==="q"||f==="p")?fmt(num(o[f])):o[f]; el.after(n); }
+  if(!c && n) n.remove();
+}
+function bindEdit(){
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f;};
+  [["no","no"],["tno","tasirNo"],["title","title"],["faults","faults"],["sub","submitter"]].forEach(([id,f])=>{const e=document.getElementById(id); if(e) e.oninput=()=>{cur[f]=e.value; dirty=true;
+    if(f==="title"){ const fa=document.getElementById("faults"); if(fa) fa.placeholder=autoFaults(cur); }
+    if(f==="title"&&cur.status==="review"&&cur.orig){ const c=cur.orig.title!==e.value; e.classList.toggle("changed",c); let n=e.nextElementSibling; if(n&&!n.classList.contains("chg"))n=null;
+      if(c&&!n){n=document.createElement("div");n.className="chg";n.textContent=cur.orig.title;e.after(n);} if(!c&&n)n.remove(); } };});
+  const veh=document.getElementById("veh"); if(veh) veh.onchange=()=>{ cur.vehicle=veh.checked; dirty=true; updFormInfo(); };
+  const rows=$("#rows");
+  rows.oninput=e=>{ const el=e.target, w=el.closest("[data-i]"); if(!w||!el.dataset.k) return; const i=+w.dataset.i, r=cur.rows[i], f=el.dataset.k;
+    if(f==="store"){ r.store=el.checked; dirty=true; renderRows(); return; }
+    r[f]=el.value; dirty=true; markChange(el,i);
+    const rt=w.querySelector("[data-rt]"); if(rt) rt.textContent="السعر الكلي: "+(r.store?"اخراج مخزني":fmt(rowTotal(r)));
+    const kl=w.querySelector("[data-kl]"); if(kl){ const kd=kindOf(r); kl.textContent=KINDS[kd]+(kd==="material"?" · "+sName(r):""); }
+    if(f==="d"){ const sn=w.querySelector('[data-k="sname"]'), mt=w.querySelector('[data-k="metal"]'), sk=w.querySelector('[data-k="kind"] option[value=""]');
+      if(sn) sn.placeholder=autoSName(r); if(mt) mt.placeholder=autoMetal(r); if(sk) sk.textContent=`تلقائي (${KINDS[autoKind(r)]})`; }
+    updTot(); updFormInfo(); };
+  rows.onchange=e=>{ if(e.target.dataset.k==="kind") rows.oninput(e); };
+  rows.onclick=async e=>{ const d=e.target.dataset.del; if(d===undefined) return; if(String(cur.rows[+d].d).trim() && !(await ask("تحذف هذه الفقرة؟","حذف",true))) return;
+    cur.rows.splice(+d,1); if(!cur.rows.length) cur.rows.push(blankRow()); dirty=true; renderEdit(); };
+  on("add",()=>{ cur.rows.push(blankRow()); dirty=true; renderRows(); const a=rows.querySelectorAll('textarea[data-k="d"]'); a[a.length-1].focus(); });
+  on("save",()=>save());
+  on("send",async()=>{ if(!valid()) return; snapOrig(); if(!(await save("review","انرسل للجنة الاعتدال ✓"))) return;
+    if(await ask("انرسل للجنة. تبلّغهم بالواتساب هسه؟","واتساب")) whatsapp("📋 كشف جديد بانتظار لجنة اعتدال الأسعار:\n"+kashfLine(cur)); });
+  on("wa",()=>whatsapp("تذكير: كشف بانتظار لجنة اعتدال الأسعار:\n"+kashfLine(cur)));
+  const kbr=document.getElementById("kbr"); if(kbr) kbr.onchange=()=>{ cur.branch=kbr.value; dirty=true; };
+  on("appr",async()=>{ if(!valid()) return; if(!(await ask("تعتمد هذا الكشف؟","اعتماد"))) return;
+    cur.approvedByName=myName(); cur.approvedAt=Date.now(); if(!(await save("approved","انعتمد ✓"))) return;
+    if(await ask("انعتمد. تبلّغ الفرع بالواتساب؟","واتساب")) whatsapp("✅ انعتمد الكشف من لجنة اعتدال الأسعار:\n"+kashfLine(cur)); });
+  on("toDraft",async()=>{ if(await ask("ترجعه مسودة حتى كاتب الكشف يعدّل؟","إرجاع")) await save("draft","رجع مسودة"); });
+  on("reopen",async()=>{ if(await ask("تفتحه مرة ثانية للجنة؟","فتح")){ snapOrig(); await save("review","انفتح للجنة"); } });
+  on("del",async()=>{ if(!(await ask("تحذف هذا الكشف نهائياً؟","حذف",true))) return; try{ await store.remove(curId); dirty=false; toast("انحذف"); renderList(); }catch(e){ toast("ما انحذف، حاول مرة ثانية."); } });
+  on("ph",()=>$("#phf").click());
+  bindForms(cur, cur.no?"_"+toEn(cur.no).replace(/[^0-9A-Za-z-]/g,""):"");
+}
+function snapOrig(){ cur.rows.forEach((r,i)=>r._o=i); cur.orig={title:cur.title,rows:clone(cur.rows).map(r=>{delete r._o;return r;})}; }
+function valid(){
+  if(!String(cur.title||"").trim()){ toast("اكتب نطاق الكشف أولاً"); return false; }
+  const bad=cur.rows.findIndex(r=>!String(r.d).trim()||!num(r.q)||(!r.store&&!num(r.p)));
+  if(bad>=0){ toast(`الفقرة ${toAr(bad+1)} ناقصة (التفاصيل أو الكمية أو السعر)`); return false; }
+  return true;
+}
+let saving=false;
+async function save(status,msg){
+  if(saving) return; saving=true;
+  const btns=[...document.querySelectorAll(".btn")]; btns.forEach(b=>b.disabled=true);
+  try{
+    const now=Date.now(), data=clone(cur); delete data.id;
+    data.rows=data.rows.filter(r=>String(r.d).trim()||num(r.q)||num(r.p));
+    if(status) data.status=status;
+    if(data.status!=="review"){ delete data.orig; data.rows.forEach(r=>delete r._o); }
+    data.updatedAt=now; data.updatedByName=myName();
+    if(!curId){ data.createdAt=now; data.createdByName=myName(); }
+    curId=await store.save(curId,data);
+    cur=data; if(!cur.rows.length) cur.rows.push(blankRow());
+    dirty=false; toast(msg||"انحفظ ✓"); renderEdit(); return true;
+  }catch(e){ toast(e&&e.code==="permission-denied"?"ما عندك صلاحية. اطلب من المسؤول يضيف إيميلك.":"ما انحفظ، تأكد من الإنترنت وحاول مرة ثانية."); btns.forEach(b=>b.disabled=false); }
+  finally{ saving=false; }
+}
+
+/* ================= تصوير الكشف (Gemini) ================= */
+$("#phf").onchange=()=>{ const f=$("#phf"), files=[...f.files]; f.value=""; if(files.length) readPhoto(files); };
+async function shrink(file){
+  const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file);});
+  const m=2000, s=Math.min(1, m/Math.max(img.width,img.height)), c=document.createElement("canvas");
+  c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL("image/jpeg",0.88).split(",")[1];
+}
+const PHOTO_PROMPT=`هذه صورة "كشف" صيانة من فرع ماء القادسية (العراق). استخرج محتواه بدقة.
+أرجع JSON فقط بهذا الشكل:
+{"no":"رقم الكشف إن وجد وإلا فارغ","title":"نص نطاق الكشف/اسم العمل بعد كلمة (نطاق الكشف/) إن وجدت","rows":[{"d":"تفاصيل العمل","q":"الكمية","u":"الوحدة","p":"سعر المفرد","store":false}]}
+قواعد:
+- انسخ النص العربي بنفس الكلمات والإملاء المكتوبة بالورقة بدون تصحيح أو إعادة صياغة، واحتفظ بالمواصفات اللاتينية كما هي (مثل Q=200m3/hr).
+- q و p أرقام بالإنكليزي (0-9) بدون فواصل آلاف. p هو سعر المفرد وليس السعر الكلي.
+- إذا مكتوب بالسعر "اخراج مخزني" اجعل store=true و p="".
+- لا تضف سطر المجموع ولا أسماء اللجنة كفقرات.
+- إذا ما تكدر تقرأ قيمة اتركها "".`;
+async function gemini(file, c){
+  const data=await shrink(file), model=c.geminiModel||"gemini-flash-latest";
+  // المفتاح بالهيدر (يشتغل للمفاتيح الجديدة AQ. والقديمة AIza)
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
+    method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},
+    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:"image/jpeg",data}}]}],generationConfig:{responseMimeType:"application/json",temperature:0}})});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok) throw {status:res.status};
+  const txt=(((j.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text||"").join("")||"";
+  const out=JSON.parse(txt.replace(/^```json|```$/g,"").trim());
+  const rows=Array.isArray(out.rows)?out.rows.map(r=>({d:String(r.d||"").trim(),q:toEn(r.q||""),u:String(r.u||"عدد"),p:r.store?"":toEn(r.p||"").replace(/[^\d.]/g,""),store:!!r.store})).filter(r=>r.d):[];
+  if(!rows.length && !out.title) throw {status:0};
+  return {no:out.no?toEn(out.no):"", title:String(out.title||"").trim(), rows};
+}
+const photoErr = e => e&&e.status===429?"خلص الحد المجاني لهسه، حاول بعد دقيقة.":e&&(e.status===400||e.status===401||e.status===403||e.status===404)?"المفتاح غلط أو الموديل ما موجود. تأكد منه بالإعدادات.":"ما كدرت أقرأ الصورة. صوّرها أوضح (ضوء جيد والورقة كاملة) أو اكتب الفقرات باليد.";
+async function getKey(){ try{ CFG.app=await store.getDoc("app"); }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح Gemini. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور بعدها ما مفعّلة. اطلب من مسؤول التطبيق يضيف مفتاح Gemini.",5000); return null; } return c; }
+// داخل الكشف: صفحة أو أكثر لنفس الكشف (تنضاف الفقرات)
+async function readPhoto(files){
+  const st=$("#phs"), b=$("#ph"); const c=await getKey(); if(!c) return;
+  b.disabled=true; let added=0;
+  try{
+    for(let i=0;i<files.length;i++){
+      st.innerHTML=`<span class="spin"></span> دا أقرأ ${files.length>1?`الصفحة ${toAr(i+1)} من ${toAr(files.length)}`:"الكشف"}… (نص دقيقة تقريباً)`;
+      const out=await gemini(files[i],c);
+      if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
+      if(out.no && !cur.no) cur.no=out.no;
+      cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? out.rows : cur.rows.concat(out.rows); added+=out.rows.length;
+    }
+    if(!cur.rows.length) cur.rows.push(blankRow());
+    dirty=true; renderEdit(); toast(`انقرأت ${toAr(added)} فقرة. راجعها مع الورقة قبل الحفظ.`,5000);
+  }catch(e){ if(added){ dirty=true; renderEdit(); } const s2=$("#phs"); if(s2) s2.textContent=photoErr(e); const b2=$("#ph"); if(b2) b2.disabled=false; }
+}
+// من القائمة: كل صورة = كشف جديد (مسودة)
+$("#phm").onchange=async()=>{
+  const f=$("#phm"), files=[...f.files]; f.value=""; if(!files.length) return;
+  const c=await getKey(); if(!c) return;
+  const box=$("#batch"); let ok=0, bad=0;
+  for(let i=0;i<files.length;i++){
+    if(box) box.innerHTML=`<span class="spin"></span> دا أقرأ الكشف ${toAr(i+1)} من ${toAr(files.length)}…`;
+    try{ const out=await gemini(files[i],c), now=Date.now();
+      await store.save(null,{no:out.no,title:out.title,rows:out.rows.length?out.rows:[blankRow()],status:"draft",tasirNo:"",branch:newBranch(),createdAt:now,updatedAt:now,createdByName:myName(),updatedByName:myName()}); ok++; }
+    catch(e){ bad++; if(e&&e.status===429){ await new Promise(r=>setTimeout(r,20000)); try{ const out=await gemini(files[i],c), now=Date.now(); await store.save(null,{no:out.no,title:out.title,rows:out.rows,status:"draft",tasirNo:"",branch:newBranch(),createdAt:now,updatedAt:now,createdByName:myName()}); ok++; bad--; }catch(x){} } }
+  }
+  const msg=`انضافت ${toAr(ok)} كشوفات كمسودات${bad?`، و${toAr(bad)} ما انقرأت`:""}. افتح كل وحدة وراجعها.`;
+  batchMsg=msg; const b2=$("#batch"); if(b2) b2.textContent=msg; toast(msg,6000);
+};
+
+/* ================= تنزيل Word ================= */
+async function makeWord(id, ks, base, btn){
+  if(!window.docx||!window.JSZip){ toast("مكتبة الوورد ما تحمّلت، تأكد من الإنترنت"); return; }
+  const jobs=jobsFor([id],ks,false);
+  if(jobs.some(j=>j[1].items&&!j[1].items.length) && !(await ask("ماكو مواد لهذه الاستمارة. تنزّلها فارغة؟","تنزيل"))) return;
+  if(btn) btn.disabled=true;
+  try{ for(const [f,J] of jobs){ const blob=await docx.Packer.toBlob(forms().build(f,J)); saveFile(await widenTables(JSZip,blob),FILE_EN[f]+base+".docx"); if(jobs.length>1) await new Promise(r=>setTimeout(r,800)); } }
+  catch(e){ console.error(e); toast("صار خطأ بإنشاء ملف الوورد"); }
+  finally{ if(btn) btn.disabled=false; }
+}
+
+/* ================= PDF لكل الاستمارات (نفس قالب الوورد مرسوم كصفحات) ================= */
+let HFORMS=null;
+function hforms(){ if(!HFORMS) HFORMS=makeForms(HtmlDocx, LOGO_B64); return HFORMS; }
+// jobs = [[formId, J, title]] -> عناصر صفحات A4 جاهزة (بعد ضبط حجم الخط)
+function buildSheets(jobs, host){
+  const sheets=[];
+  jobs.forEach(([f,J])=>{ hforms().build(f,J).pages().forEach(pg=>{
+    const sh=document.createElement("div"); sh.className="sheet";
+    sh.style.padding=`${pg.margin.top}px ${pg.margin.right}px ${pg.margin.bottom}px ${pg.margin.left}px`;
+    sh.innerHTML=`<div class="c">${pg.html}</div>`; host.appendChild(sh); fitSheet(sh,pg.margin); sheets.push(sh); }); });
+  return sheets;
+}
+// أكبر خط يملأ الصفحة (لحد ١٫٣)، وإذا ما كفت حتى بـ ٠٫٧٥ تطول الورقة وتنقسم لصفحات
+function fitSheet(sh,m){
+  const c=sh.firstChild, avail=1123-m.top-m.bottom; let k=1.3;
+  for(; k>0.75; k=+(k-0.05).toFixed(2)){ sh.style.setProperty("--k",k); if(c.scrollHeight<=avail*0.97) return; }
+  sh.style.setProperty("--k",0.75);
+  if(c.scrollHeight>avail){ const n=Math.ceil(c.scrollHeight/avail); sh.style.height=(1123*n)+"px"; sh.dataset.pages=n; }
+}
+async function sheetsToPdf(sheets, onProgress){
+  const pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait"}); let first=true, i=0;
+  for(const sh of sheets){
+    const off=document.createElement("div"); off.className="offscreen"; const node=sh.cloneNode(true); off.appendChild(node); document.body.appendChild(off);
+    const H=sh.offsetHeight, opt={pixelRatio:2.2,backgroundColor:"#ffffff",width:794,height:H,skipFonts:true,quality:0.9};
+    let img=await htmlToImage.toJpeg(node,opt); img=await htmlToImage.toJpeg(node,opt); off.remove();
+    const n=+(sh.dataset.pages||1);
+    if(n===1){ if(!first) pdf.addPage(); pdf.addImage(img,"JPEG",0,0,210,297); first=false; }
+    else { const im=await new Promise(r=>{const x=new Image(); x.onload=()=>r(x); x.src=img;}); const ph=im.height/n;
+      for(let p=0;p<n;p++){ const cv=document.createElement("canvas"); cv.width=im.width; cv.height=ph; cv.getContext("2d").drawImage(im,0,-p*ph);
+        if(!first) pdf.addPage(); pdf.addImage(cv.toDataURL("image/jpeg",0.9),"JPEG",0,0,210,297); first=false; } }
+    onProgress&&onProgress(++i, sheets.length);
+  }
+  return pdf.output("blob");
+}
+// يعرض الصفحات ويه زر تنزيل
+async function showPdf(jobs, title, fname){
+  if(!window.htmlToImage||!window.jspdf){ toast("مكتبة الـ PDF ما تحمّلت، تأكد من الإنترنت"); return; }
+  const m=document.createElement("div"); m.className="modal";
+  m.innerHTML=`<div class="top"><b>${esc(title)}</b><button class="btn" id="dl">تنزيل PDF</button><button class="btn sec" id="cl">إغلاق</button></div><div class="scroll"><div class="wrap"></div></div>`;
+  document.body.appendChild(m);
+  const wrap=m.querySelector(".wrap"); let sheets;
+  try{ sheets=buildSheets(jobs, wrap); }catch(e){ console.error(e); toast("صار خطأ بتجهيز الصفحات"); m.remove(); return; }
+  wrap.querySelectorAll(".sheet").forEach(s=>s.style.marginBottom="14px");
+  const sc=()=>{ const w=m.querySelector(".scroll").clientWidth-24, s=Math.min(1,w/794); wrap.style.transform=`scale(${s})`; wrap.style.width=(794*s)+"px"; wrap.style.height=(wrap.scrollHeight*s)+"px"; };
+  sc(); addEventListener("resize",sc);
+  m.querySelector("#cl").onclick=()=>{ removeEventListener("resize",sc); m.remove(); };
+  const dl=m.querySelector("#dl");
+  dl.onclick=async()=>{ dl.disabled=true; const old=dl.innerHTML;
+    try{ const blob=await sheetsToPdf(sheets,(i,n)=>dl.innerHTML=`<span class="spin"></span> ${toAr(i)}/${toAr(n)}`); saveFile(blob,fname); }
+    catch(e){ console.error(e); toast("صار خطأ بإنشاء الـ PDF"); }
+    finally{ dl.disabled=false; dl.innerHTML=old; } };
+}
+addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+start();
+</script>
+</body>
+</html>
