@@ -217,12 +217,12 @@ body.pvmode #pv{display:block}
 #pv .pvpages .sheet{margin:0 0 12px}
 #pv .sheet{box-shadow:0 2px 8px rgba(0,0,0,.25)}
 @media print{
-  @page{size:A4 portrait;margin:0}
+  @page{size:A4 portrait;margin:8mm}
   html,body{background:#fff!important;margin:0!important;padding:0!important}
   #pv .pvbar{display:none!important}
   #pv .pvwrap{padding:0!important;height:auto!important;overflow:visible!important}
-  #pv .pvpages{transform:none!important;margin:0!important;width:794px!important}
-  #pv .sheet{box-shadow:none!important;margin:0!important;height:1118px!important;overflow:hidden!important;page-break-after:always;break-after:page}
+  #pv .pvpages{transform:none!important;margin:0!important;width:auto!important}
+  #pv .sheet{box-shadow:none!important;margin:0 auto!important;height:1118px!important;overflow:hidden!important;zoom:.9;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
   #pv .sheet.tall{height:auto!important;overflow:visible!important}
   #pv .sheet:last-child{page-break-after:auto;break-after:auto}
 }
@@ -717,7 +717,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٣/١١ — طباعة ٨";
+const APP_VER = "١٣/١١ — طباعة ٩";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
