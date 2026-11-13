@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== إيميل مسؤول التطبيق (نفس الإيميل بملف التطبيق) =====
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in ['chasseng@gmail.com', 'chasseng@googlemail.com'];
+    }
+
+    function signedIn() { return request.auth != null; }
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function hasProfile() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function isCommittee() { return hasProfile() && (me().role in ['head', 'head_v', 'adm', 'committee', 'committee_v', 'tech', 'fin', 'dir', 'store', 'lastfix', 'acc', 'audh', 'aud']); }
+    function isHeadAll() { return hasProfile() && me().role == 'head' && me().branch == ''; }
+    function isHeadOf(b) { return hasProfile() && me().role == 'head' && me().branch == b; }
+    function isStaff() { return hasProfile() && me().role == 'staff' && me().branch != ''; }
+    function member() { return isAdmin() || isCommittee() || isStaff() || (hasProfile() && me().role == 'head'); }
+
+    // حسابات الموظفين: كل واحد يسوي حسابه "بانتظار الموافقة"، والمسؤول بس يحدد الفرع والصلاحية
+    match /users/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'pending' && request.resource.data.branch == '';
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sig', 'sigKey', 'name']));
+      allow delete: if isAdmin();
+    }
+
+    // الكشوفات: موظف الفرع يشوف فرعه بس، اللجنة والمسؤول يشوفون كل الفروع
+    match /kashfs/{id} {
+      allow read: if isAdmin() || isCommittee() || isHeadAll() || isHeadOf(resource.data.branch)
+        || (isStaff() && resource.data.branch == me().branch);
+      allow create: if isAdmin()
+        || (isStaff() && request.resource.data.branch == me().branch);
+      allow update: if isAdmin() || isCommittee() || isHeadAll() || isHeadOf(resource.data.branch)
+        || (isStaff() && resource.data.branch == me().branch
+            && request.resource.data.branch == me().branch);
+      allow delete: if isAdmin()
+        || (isStaff() && resource.data.branch == me().branch);
+
+      // دردشة الكشف: الكل يكتب باسمه، وما تنحذف
+      match /chat/{mid} {
+        allow read: if member();
+        allow create: if member() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // صور عروض الأسعار: يضيفها الفرع، وتقرأها اللجنة، ولا تُعدّل ولا تُحذف
+      match /quotes/{qid} {
+        allow read: if member();
+        allow create: if member() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // سجل التواقيع: ينضاف بس، ما ينعدّل ولا ينحذف (حتى المسؤول)
+      match /sigs/{sid} {
+        allow read: if member();
+        allow create: if member() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // الدردشة الخاصة بكل فرع: موظفو الفرع نفسه + الأقسام واللجان والإدارة (بدون الفروع الثانية)
+    match /rooms/{b}/msgs/{mid} {
+      allow read: if isAdmin() || (member() && (!isStaff() || me().branch == b));
+      allow create: if (isAdmin() || (member() && (!isStaff() || me().branch == b)))
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // الدردشة العامة
+    match /chat/{mid} {
+      allow read: if member();
+      allow create: if member() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // التواقيع المرسومة: كل نسخة ثابتة، صاحبها بس يضيفها، وما تنعدّل ولا تنحذف
+    match /sigsPub/{sid} {
+      allow read: if member();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && sid.matches(request.auth.uid + '_[0-9]+');
+      allow update, delete: if false;
+    }
+
+    // إعدادات الاستمارات ومفتاح قراءة الصور: الكل يقرأ، المسؤول بس يعدّل
+    match /config/{id} {
+      allow read: if member();
+      allow write: if isAdmin();
+    }
+  }
+}
