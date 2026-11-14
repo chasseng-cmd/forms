@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١١";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٢";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1743,7 +1743,8 @@ async function shrink(file){
   g.filter="contrast(1.25) brightness(1.05)"; g.drawImage(img,0,0,c.width,c.height); // يوضّح كتابة القلم الجاف
   return c.toDataURL("image/jpeg",0.8).split(",")[1];
 }
-const PHOTO_PROMPT=`هذه صورة "كشف" صيانة من فرع ماء القادسية (العراق). استخرج محتواه بدقة.
+const PHOTO_PROMPT=`IMPORTANT: The document is in ARABIC. Output every text value in ARABIC exactly as written on the paper. NEVER translate to English. Keys stay as given.
+هذه صورة "كشف" صيانة من فرع ماء القادسية (العراق). استخرج محتواه بدقة.
 أرجع JSON فقط بهذا الشكل:
 {"no":"رقم الكشف إن وجد وإلا فارغ","title":"نص نطاق الكشف/اسم العمل بعد كلمة (نطاق الكشف/) إن وجدت","rows":[{"d":"تفاصيل العمل كاملة مع المنشأ إن كان مكتوباً","q":"الكمية","u":"الوحدة","p":"سعر المفرد","store":false}]}
 قواعد:
@@ -1755,7 +1756,8 @@ const PHOTO_PROMPT=`هذه صورة "كشف" صيانة من فرع ماء ال�
 - الكشف ممكن يكون مكتوب كله بخط اليد (قلم جاف). اقرأ خط اليد بعناية وحوّله لكتابة بنفس الكلمات.
 - مهم: الورقة ممكن تكون معدّلة باليد بالقلم الجاف (لجنة الاعتدال). القيمة المشطوبة اتركها، وخذ القيمة الجديدة المكتوبة باليد جنبها أو فوكها (بالسعر أو الكمية أو الوحدة أو التفاصيل).
 - الفقرة المشطوبة كلها لا تكتبها. الفقرة المضافة بخط اليد اكتبها.
-- إذا ما يمكنك تقرأ قيمة اتركها "" وأكمل باقي الفقرات ولا تتوقف.`;
+- إذا ما يمكنك تقرأ قيمة اتركها "" وأكمل باقي الفقرات ولا تتوقف.
+- ممنوع الترجمة: اكتب title و d و u بالعربي كما في الورقة حرفياً (مثال u: "عدد" وليس "pcs"، d: "تجهيز بلبرنك منشأ ياباني" وليس "Supply bearing").`;
 // يجهّز الملف: صورة ← تُصغَّر وتوضَّح، PDF ← يُرسل كما هو، صورة ما تنفتح (HEIC) ← تُرسل كما هي
 const b64file = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(f); });
 async function prepFile(file){
@@ -1776,6 +1778,7 @@ async function gemini(file, c, onStage){
     if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال الصورة وانتظار القراءة");
     try{ return await gemini1(part,model,c,Math.min(90000,left)); }
     catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===429&&/quota/i.test(e.msg||"")) break;
+      if(e&&e.status===-6) break; // ترجم للإنكليزي: نجرّب النموذج التالي
       if(e&&e.status===404){ const sg=sugModel(e.msg); if(sg&&!models.includes(sg)) models.splice(mi+1,0,sg); break; }
       await new Promise(r=>setTimeout(r,e&&e.status===429?6000:1500)); }
   }
@@ -1800,6 +1803,8 @@ async function gemini1(part, model, c, ms, plain){
   let out; try{ out=JSON.parse(txt.replace(/^```json|```$/g,"").trim()); }catch(e){ const a=txt.indexOf("{"), b=txt.lastIndexOf("}"); out=JSON.parse(txt.slice(a,b+1)); }
   const rows=Array.isArray(out.rows)?out.rows.map(r=>({o:String(r.o||"").trim(),d:String(r.d||"").replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g,"$1").trim(),q:toEn(r.q||""),u:String(r.u||"عدد").replace(/جمل[ةه]/g,"").trim()||"عدد",p:r.store?"":toEn(r.p||"").replace(/[^\d.]/g,""),store:!!r.store})).filter(r=>r.d):[];
   if(!rows.length && !out.title) throw {status:0};
+  const allTxt=(out.title||"")+" "+rows.map(r=>r.d+" "+r.u).join(" "), ar=(allTxt.match(/[\u0621-\u064A]/g)||[]).length, la=(allTxt.match(/[A-Za-z]/g)||[]).length;
+  if(la>ar) throw {status:-6};
   return {no:out.no?toEn(out.no):"", title:String(out.title||"").trim(), rows};
 }
 const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slice(0,120)})`:"";
@@ -1807,6 +1812,7 @@ const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slic
     : (st===400&&keyErr(e.msg))||st===401||st===403?"مفتاح القراءة الذكية غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
     : st===400?"خدمة القراءة رفضت الطلب."+m
     : st===404?"نموذج القراءة غير موجود. امسح خانة النموذج في الإعدادات."+m
+    : st===-6?"خدمة القراءة رجّعت النص بالإنكليزي. حاول مرة ثانية."
     : st===-2?"الملف كبير جداً (أكثر من ١٨ ميغا). صوّره بدقة أقل."
     : st===-3||st===-4?"انتهت المهلة (دقيقتان ونصف) بدون رد من خدمة القراءة. تأكد من الإنترنت وحاول مرة أخرى."
     : st===-5?"تعذّر الاتصال بخدمة القراءة. تأكد من الإنترنت أو جرّب الواي فاي."
