@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٤ سكنر";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٥ سكنر";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1822,13 +1822,17 @@ async function prepScan(file){
   const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file);});
   const m=2400, s=Math.min(1.6, m/Math.max(img.width,img.height)), c=document.createElement("canvas");
   c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); const g=c.getContext("2d");
-  g.filter="grayscale(1) contrast(1.6) brightness(1.08)"; g.drawImage(img,0,0,c.width,c.height); return c;
+  g.filter="grayscale(1) contrast(1.4) brightness(1.05)"; g.drawImage(img,0,0,c.width,c.height);
+  try{ const d=g.getImageData(0,0,c.width,c.height), a=d.data; let sum=0; for(let i=0;i<a.length;i+=4) sum+=a[i]; const th=sum/(a.length/4)*0.78;
+    for(let i=0;i<a.length;i+=4){ const v=a[i]<th?0:255; a[i]=a[i+1]=a[i+2]=v; } g.putImageData(d,0,0); }catch(e){}
+  return c;
 }
 const UNITS=/(عدد|متر\s*مربع|متر\s*مكعب|متر|م٢|م٣|م2|م3|كغم|كيلو\s*غرام|كيلوغرام|كيلواط|لتر|طن|قطعة|قطعه|زوج|لفة|لفه|كيس|علبة|علبه|برميل|سيت|طقم|ساعة|ساعه|يوم)/;
 function parseOCR(text){
   const lines=String(text).split(/\n+/).map(x=>toEn(x).replace(/[|_\[\]{}<>]/g," ").replace(/\s+/g," ").trim()).filter(Boolean);
-  let title="", rows=[];
-  for(const L of lines){
+  let title="", rows=[]; const hi=lines.findIndex(L=>/الكمي/.test(L)&&/تفاصيل|الوحد|السعر/.test(L));
+  if(hi>0){ const tm=lines.slice(0,hi).join(" ").match(/نطاق\s*الكشف\s*[\/:\-]?\s*(.+)/); if(tm) title=tm[1].trim(); }
+  for(const L of (hi>=0?lines.slice(hi+1):lines)){
     const tm=L.match(/نطاق\s*الكشف\s*[\/:\-]?\s*(.+)/); if(tm){ title=tm[1].trim(); continue; }
     if(/تفاصيل|الكمية|السعر الكلي|المجموع|لاغيرها|محافظة|مديرية|مركز تشغيل|المهندس|الفني/.test(L)) continue;
     const store=/اخراج\s*مخزني|إخراج\s*مخزني/.test(L);
@@ -1855,6 +1859,40 @@ function parseOCR(text){
   }
   return {title, rows};
 }
+// السكنر أحياناً يقرأ الأرقام العربية كحروف لاتينية (٢→Y ، ٥→O ، ٧→V ، ٨→A) — نصلحها بالأعمدة الرقمية
+const fixNum = t => /^[0-9VAOoYrlI|.,٠-٩]+$/.test(t) ? t.replace(/[Oo]/g,"5").replace(/Y/g,"2").replace(/V/g,"7").replace(/A/g,"8").replace(/r/g,"3").replace(/[lI|]/g,"1") : t;
+// قراءة بالأعمدة: نحدد مكان كل عمود من كلمات رأس الجدول، ثم كل كلمة تروح لعمودها حسب موقعها بالورقة
+function parseCols(data){
+  const lines=(data.lines||[]).map(l=>({y:(l.bbox.y0+l.bbox.y1)/2, text:toEn(l.text||""), words:(l.words||[]).map(w=>({t:toEn(w.text||"").trim(), x:(w.bbox.x0+w.bbox.x1)/2, x0:w.bbox.x0, x1:w.bbox.x1})).filter(w=>w.t)}));
+  const hi=lines.findIndex(l=>l.words.some(w=>/الكمي/.test(w.t)) && l.words.some(w=>/الوحد|السعر|الكلي/.test(w.t)));
+  if(hi<0) return null;
+  const H=lines[hi].words, f=re=>H.filter(w=>re.test(w.t));
+  const q=f(/الكمي/)[0], u=f(/الوحد/)[0], tot=f(/الكلي/)[0], prs=f(/^السعر/).sort((a,b)=>b.x-a.x), pr=prs[0];
+  if(!q||!u) return null;
+  const step=Math.abs(q.x-u.x)||60;
+  const cQ=q.x, cU=u.x, cP=pr?pr.x:cU-step, cT=tot?tot.x:cP-step;
+  const bDQ=cQ+step*0.55;                 // يمين هذا = تفاصيل
+  const mid=(a,b)=>(a+b)/2;
+  const col=x=> x>bDQ?"d": x>mid(cQ,cU)?"q": x>mid(cU,cP)?"u": x>mid(cP,cT)?"p":"t";
+  const title=(lines.slice(0,hi).map(l=>l.text).join(" ").match(/نطاق\s*الكشف\s*[\/:\-]?\s*(.+)/)||[])[1]||"";
+  const rows=[];
+  for(const L of lines.slice(hi+1)){
+    if(/المجموع|لاغيرها/.test(L.text)) break;
+    if(/المهندس|الفني/.test(L.text) && rows.length) break;
+    const c={d:[],q:[],u:[],p:[],t:[]};
+    [...L.words].sort((a,b)=>b.x-a.x).forEach(w=>{ const k=col(w.x); c[k].push(k==="d"?w.t:fixNum(w.t)); });
+    let d=c.d.join(" ").replace(/^\s*\d{1,2}\s*[-.)]?\s+/,"").replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g,"$1").replace(/\s+/g," ").trim();
+    const num=a=>{ const m=a.join(" ").replace(/[,،]/g,"").match(/\d+(?:\.\d+)?/); return m?String(+m[0]):""; };
+    const qq=num(c.q), pp=num(c.p), tt=num(c.t), uu=(c.u.join(" ").match(UNITS)||[])[1]||c.u.join(" ").replace(/[\d.]/g,"").trim();
+    const store=/مخزن|اخراج|إخراج/.test(c.p.join(" ")+c.t.join(" "));
+    const hasNums=qq||pp||tt||store;
+    if(!hasNums){ if(d && rows.length) rows[rows.length-1].d+=" "+d; else if(d.length>3) rows.push({d,q:"",u:"عدد",p:"",store:false}); continue; }
+    if(!d && rows.length && !rows[rows.length-1].q){ const r=rows[rows.length-1]; r.q=qq; r.u=uu||r.u; r.p=store?"":pp; r.store=store; continue; }
+    let P=pp; if(!P && tt && qq && +qq) P=String(Math.round(+tt/+qq));
+    rows.push({d, q:qq||(store?"1":""), u:uu||"عدد", p:store?"":P, store});
+  }
+  return {title:title.trim(), rows:rows.filter(r=>r.d.length>1)};
+}
 async function scanOCR(file){
   const st=$("#phs"), t0=Date.now(); let stage="تحميل السكنر (أول مرة فقط ~٣ ميغا)", pct="";
   const draw=()=>{ if(st) st.innerHTML=`<span class="spin"></span> ${stage}${pct?` ${pct}`:""}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; }; draw(); const tk=setInterval(draw,1000);
@@ -1863,9 +1901,9 @@ async function scanOCR(file){
     await loadTess(); stage="تجهيز الصورة"; draw(); const can=await prepScan(file);
     stage="تحميل لغة العربي"; draw();
     w=await Tesseract.createWorker(["ara","eng"],1,{logger:m=>{ if(m.status==="recognizing text"){ stage="قراءة الكتابة"; pct=toAr(Math.round(m.progress*100))+"٪"; } }});
-    await w.setParameters({preserve_interword_spaces:"1", tessedit_pageseg_mode:"6"});
+    await w.setParameters({preserve_interword_spaces:"1", tessedit_pageseg_mode:"4"});
     stage="قراءة الكتابة"; draw(); const {data}=await w.recognize(can);
-    const out=parseOCR(data.text||"");
+    let out=null; try{ out=parseCols(data); }catch(x){} if(!out||!out.rows.length) out=parseOCR(data.text||"");
     if(!out.rows.length && !out.title) throw new Error("empty");
     if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
     cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? out.rows : cur.rows.concat(out.rows);
