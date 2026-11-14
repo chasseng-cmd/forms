@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٠";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١١";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1769,13 +1769,14 @@ const sugModel = m => { const x=String(m||"").match(/use\s+(?:models\/)?(gemini-
 // مهلة كلية ٩٠ ثانية بدل الانتظار المفتوح
 async function gemini(file, c, onStage){
   if(onStage) onStage("تجهيز الملف");
-  const part=await prepFile(file), models=[...new Set([bestModel()||c.geminiModel||"gemini-3.8-flash","gemini-3.8-flash","gemini-flash-latest","gemini-flash-lite-latest","gemini-2.5-flash"])];
+  const part=await prepFile(file), models=[...new Set([bestModel(),c.geminiModel,"gemini-3.5-flash-lite","gemini-flash-lite-latest","gemini-3-flash-preview","gemini-3.8-flash","gemini-flash-latest"].filter(Boolean))];
   const end=Date.now()+150000; let last={status:-3};
   for(let mi=0;mi<models.length;mi++) for(let t=0;t<2;t++){ const model=models[mi];
     const left=end-Date.now(); if(left<5000) throw last;
     if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال الصورة وانتظار القراءة");
     try{ return await gemini1(part,model,c,Math.min(90000,left)); }
-    catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===404){ const sg=sugModel(e.msg); if(sg&&!models.includes(sg)) models.splice(mi+1,0,sg); break; }
+    catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===429&&/quota/i.test(e.msg||"")) break;
+      if(e&&e.status===404){ const sg=sugModel(e.msg); if(sg&&!models.includes(sg)) models.splice(mi+1,0,sg); break; }
       await new Promise(r=>setTimeout(r,e&&e.status===429?6000:1500)); }
   }
   throw last;
