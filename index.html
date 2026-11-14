@@ -222,7 +222,7 @@ body.pvmode #pv{display:block}
   #pv .pvbar{display:none!important}
   #pv .pvwrap{padding:0!important;height:auto!important;overflow:visible!important}
   #pv .pvpages{transform:none!important;margin:0!important;width:auto!important}
-  #pv .sheet{box-shadow:none!important;margin:0 auto!important;height:1118px!important;overflow:hidden!important;zoom:.9;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
+  #pv .sheet{box-shadow:none!important;margin:0 auto!important;height:1118px!important;overflow:hidden!important;zoom:.84;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
   #pv .sheet.tall{height:auto!important;overflow:visible!important}
   #pv .sheet:last-child{page-break-after:auto;break-after:auto}
 }
@@ -717,7 +717,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٣/١١ — طباعة ٩";
+const APP_VER = "١٤/١١ — طباعة ١٠";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
