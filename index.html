@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٦ سكنر جدول";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٧";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -2138,7 +2138,7 @@ async function scanOCR(file){
     const bad=out.rows.map((r,i)=>r.chk===false?toAr(i+1):null).filter(Boolean);
     dirty=true; clearInterval(tk); renderEdit();
     toast(`قرأ السكنر ${toAr(out.rows.length)} فقرة.${bad.length?` تأكد من أرقام الفقرة ${bad.join("، ")} (الحساب ما تطابق).`:""} راجعها مع الورقة قبل الحفظ.`,8000);
-  }catch(e){ clearInterval(tk); const s2=$("#phs"); if(s2) s2.textContent = e&&e.message==="load" ? "تعذّر تحميل السكنر. تأكد من الإنترنت (يحتاجه أول مرة فقط)." : "السكنر لم يستطع قراءة الورقة. صوّر الجدول كاملاً من الأعلى بإضاءة جيدة وبدون ظل، أو اكتب الفقرات يدوياً."; }
+  }catch(e){ clearInterval(tk); const s2=$("#phs"); if(s2) s2.textContent = e&&e.message==="load" ? "تعذّر تحميل السكنر. تأكد من الإنترنت (يحتاجه أول مرة فقط)." : "السكنر لم يستطع قراءة الورقة. صوّر الجدول كاملاً من الأعلى بإضاءة جيدة وبدون ظل، أو اكتب الفقرات يدوياً."+" [السبب: "+stage+" — "+String((e&&(e.message||e))||"").slice(0,140)+"]"; }
   finally{ clearInterval(tk); for(const k in workers) workers[k].terminate().catch(()=>{}); }
 }
 // داخل الكشف: صفحة أو أكثر للكشف نفسه (تُضاف الفقرات)
