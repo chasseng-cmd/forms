@@ -717,7 +717,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٠";
+const APP_VER = "١٤/١١ — طباعة ١١";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -757,8 +757,8 @@ function printView(jobs,title,closeModal,fresh){
   if(closeModal) closeModal();
   let pv=document.getElementById("pv"); if(pv) pv.remove();
   pv=document.createElement("div"); pv.id="pv";
-  pv.innerHTML=`<div class="pvbar"><button class="btn" id="pvp" ${fresh?"":"disabled"}>🖨️ طباعة</button><button class="btn sec" id="pvx">✖ رجوع</button>
-    <div class="pvh">اضغط «طباعة» واختر الطابعة وA4. لحفظ PDF أو إرساله: اضغط «طباعة» ثم زر المشاركة ⬆️ أعلى نافذة الطباعة.</div></div><div class="pvwrap"><div class="pvpages"></div></div>`;
+  pv.innerHTML=`<div class="pvbar"><button class="btn" id="pvp" ${fresh?"":"disabled"}>${fresh?"🖨️ طباعة":"⏳ تجهيز…"}</button><button class="btn sec" id="pvx">✖ رجوع</button>
+    <div class="pvh">اضغط «طباعة» مرة وحدة وانتظر ثواني حتى تطلع نافذة الطباعة، ثم اختر الطابعة وA4. لحفظ PDF أو إرساله: اضغط «طباعة» ثم زر المشاركة ⬆️ أعلى نافذة الطباعة.</div></div><div class="pvwrap"><div class="pvpages"></div></div>`;
   document.body.appendChild(pv); document.body.classList.add("pvmode");
   const host=pv.querySelector(".pvpages"), sheets=buildSheets(jobs,host);
   sheets.forEach(sh=>{ if(+(sh.dataset.pages||1)>1) sh.classList.add("tall"); });
@@ -766,9 +766,14 @@ function printView(jobs,title,closeModal,fresh){
   const fit=()=>{ const vw=document.documentElement.clientWidth, z=Math.min(1,(vw-12)/794); host.style.transform=`scale(${z})`; host.style.marginLeft=Math.max(0,(vw-794*z)/2)+"px"; wrap.style.height=(host.scrollHeight*z+20)+"px"; }; fit(); addEventListener("resize",fit);
   scrollTo(0,0);
   const base=location.href.split("#")[0];
-  if(!fresh) pvPack(jobs).then(d=>{ try{ localStorage.setItem("pvdata",d); }catch(e){} try{ history.replaceState(null,"",base+"#pv="+d); }catch(e){ try{ history.replaceState(null,"",base+"#pv"); }catch(x){} } })
-    .catch(()=>{}).then(()=>{ pv.querySelector("#pvp").disabled=false; });
-  pv.querySelector("#pvp").onclick=()=>{ try{ window.print(); }catch(e){ toast("تعذّرت الطباعة"); } };
+  const pb=pv.querySelector("#pvp"), ready=()=>{ pb.disabled=false; pb.innerHTML="🖨️ طباعة"; };
+  if(!fresh){ const tm=setTimeout(ready,4000);
+    pvPack(jobs).then(d=>{ try{ localStorage.setItem("pvdata",d); }catch(e){} try{ history.replaceState(null,"",base+"#pv="+d); }catch(e){ try{ history.replaceState(null,"",base+"#pv"); }catch(x){} } })
+      .catch(()=>{}).then(()=>{ clearTimeout(tm); ready(); }); }
+  // ضغطة وحدة تكفي: نافذة الطباعة بالآيفون تحتاج ثواني حتى تطلع، والضغط المتكرر يلغيها
+  pb.onclick=()=>{ if(pb.disabled) return; pb.disabled=true; pb.innerHTML="⏳ تُفتح نافذة الطباعة… انتظر";
+    try{ window.print(); }catch(e){ toast("تعذّرت الطباعة"); }
+    setTimeout(ready,6000); };
   pv.querySelector("#pvx").onclick=()=>{ removeEventListener("resize",fit); pv.remove(); document.body.classList.remove("pvmode"); try{ history.replaceState(null,"",base); }catch(e){} };
 }
 // عند تحميل الصفحة برابط الطباعة: ارسم الاستمارة مباشرة (بدون انتظار تسجيل الدخول)
