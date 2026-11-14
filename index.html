@@ -218,7 +218,7 @@ body.pvmode #pv{display:block}
 #pv .pvbar .btn{width:auto;margin:0;flex:1;min-width:110px}
 #pv .pvbar .pvh{width:100%;font-size:14px;line-height:1.6}
 #pv .pvwrap{direction:ltr;overflow:hidden;padding:10px 0}
-#pv .pvpages{width:683px;transform-origin:top left}
+#pv .pvpages{transform-origin:top left}
 #pv .pvpages .sheet{margin:0 0 12px}
 @media screen{ #pv .pgw{display:block} }
 #pv .sheet{box-shadow:0 2px 8px rgba(0,0,0,.25)}
@@ -227,7 +227,7 @@ body.pvmode #pv{display:block}
   html,body{background:#fff!important;margin:0!important;padding:0!important}
   #pv .pvbar{display:none!important}
   #pv .pvwrap{padding:0!important;height:auto!important;overflow:visible!important}
-  #pv .pvpages{transform:none!important;margin:0 auto!important;width:683px!important}
+  #pv .pvpages{transform:none!important;margin:0 auto!important;width:auto!important}
   #pv .sheet{box-shadow:none!important;margin:0 auto!important;overflow:hidden!important}
   #pv .sheet.tall{overflow:visible!important}
 }
@@ -643,7 +643,7 @@ const HtmlDocx = (function(){
     get fs(){ return (this.o.size||22)/2; } }
   class ImageRun{ constructor(o){ this.o=o; }
     html(){ let b="", d=this.o.data; for(let i=0;i<d.length;i++) b+=String.fromCharCode(d[i]);
-      const t=this.o.transformation||{}, mime=this.o.type==="png"?"image/png":"image/jpeg"; return `<img src="data:${mime};base64,${btoa(b)}" style="width:${t.width}px;height:${t.height}px;vertical-align:middle">`; }
+      const t=this.o.transformation||{}, mime=this.o.type==="png"?"image/png":"image/jpeg"; return `<img src="data:${mime};base64,${btoa(b)}" style="width:calc(var(--s,1)*${t.width}px);height:calc(var(--s,1)*${t.height}px);vertical-align:middle">`; }
     get fs(){ return 11; } }
   class PageBreak{ html(){ return PB; } }
   class Paragraph{ constructor(o){ this.o = typeof o==="string" ? {children:[new TextRun(o)]} : (o||{}); }
@@ -667,7 +667,7 @@ const HtmlDocx = (function(){
     html(){ const h=this.o.height; return `<tr style="${h?`height:${K(h.value/20)};`:""}page-break-inside:avoid">${(this.o.children||[]).map(c=>c.html()).join("")}</tr>`; } }
   class Table{ constructor(o){ this.o=o||{}; }
     html(){ const o=this.o, W=o.columnWidths||[], tot=W.reduce((a,c)=>a+c,0)||o.width.size, full=tot>=10200;
-      return `<table dir="ltr" style="width:${full?"100%":(tot/15)+"px"};table-layout:fixed;border-collapse:collapse;margin:0 auto"><colgroup>${W.map(w=>`<col style="width:${(w/tot*100).toFixed(3)}%">`).join("")}</colgroup>${(o.rows||[]).map(r=>r.html()).join("")}</table>`; } }
+      return `<table dir="ltr" style="width:${full?"100%":Math.min(100,tot/10200*100).toFixed(2)+"%"};table-layout:fixed;border-collapse:collapse;margin:0 auto"><colgroup>${W.map(w=>`<col style="width:${(w/tot*100).toFixed(3)}%">`).join("")}</colgroup>${(o.rows||[]).map(r=>r.html()).join("")}</table>`; } }
   class Document{ constructor(o){ this.o=o; }
     pages(){ const s=this.o.sections[0], m=(s.properties.page||{}).margin||{}, out=[[]];
       s.children.forEach(c=>{ const h=c.html(); if(h===PB) out.push([]); else out[out.length-1].push(h); });
@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٣";
+const APP_VER = "١٤/١١ — طباعة ١٤";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -768,7 +768,7 @@ function printView(jobs,title,closeModal,fresh){
   const host=pv.querySelector(".pvpages"), sheets=buildSheets(jobs,host,PS);
   sheets.forEach(sh=>{ if(+(sh.dataset.pages||1)>1) sh.classList.add("tall"); });
   const wrap=pv.querySelector(".pvwrap");
-  const W=Math.round(794*PS);
+  const W=Math.round(794*PS); host.style.width=W+"px";
   const fit=()=>{ if(matchMedia&&matchMedia("print").matches) return; const vw=document.documentElement.clientWidth, z=Math.min(1,(vw-12)/W); host.style.transform=z<1?`scale(${z})`:"none"; host.style.marginLeft=Math.max(0,(vw-W*z)/2)+"px"; wrap.style.height=(host.scrollHeight*z+20)+"px"; }; fit(); addEventListener("resize",fit);
   scrollTo(0,0);
   const base=location.href.split("#")[0];
@@ -1830,13 +1830,13 @@ let HFORMS=null;
 function hforms(){ if(!HFORMS) HFORMS=makeForms(HtmlDocx, LOGO_B64); return HFORMS; }
 // jobs = [[formId, J, title]] -> عناصر صفحات A4 جاهزة (بعد ضبط حجم الخط)
 // S<1: الصفحة تُبنى أصغر فعلياً (عرض وارتفاع وهوامش وخط) حتى تدخل داخل هوامش الطابعة بدون أي تصغير من المتصفح
-const PS=0.86;
+const PS = (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1)) ? 0.66 : 0.86;
 function buildSheets(jobs, host, S){
   const sheets=[]; S=S||1;
   jobs.forEach(([f,J])=>{ hforms().build(f,J).pages().forEach(pg=>{
     const sh=document.createElement("div"); sh.className="sheet"+(S<1?" sm":"");
     const m={top:pg.margin.top*S,right:pg.margin.right*S,bottom:pg.margin.bottom*S,left:pg.margin.left*S};
-    if(S<1){ sh.style.width=Math.round(794*S)+"px"; sh.style.height=Math.round(1123*S)+"px"; sh.dataset.s=S; }
+    if(S<1){ sh.style.width=Math.round(794*S)+"px"; sh.style.height=Math.round(1123*S)+"px"; sh.dataset.s=S; sh.style.setProperty("--s",S); }
     sh.style.padding=`${m.top}px ${m.right}px ${m.bottom}px ${m.left}px`;
     sh.innerHTML=`<div class="c">${pg.html}</div>`; host.appendChild(sh); fitSheet(sh,m); sheets.push(sh); }); });
   return sheets;
