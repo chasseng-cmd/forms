@@ -215,6 +215,7 @@ body.pvmode #pv{display:block}
 #pv .pvwrap{direction:ltr;overflow:hidden;padding:10px 0}
 #pv .pvpages{width:794px;transform-origin:top left}
 #pv .pvpages .sheet{margin:0 0 12px}
+@media screen{ #pv .pgw{display:block} }
 #pv .sheet{box-shadow:0 2px 8px rgba(0,0,0,.25)}
 @media print{
   @page{size:A4 portrait;margin:8mm}
@@ -222,9 +223,11 @@ body.pvmode #pv{display:block}
   #pv .pvbar{display:none!important}
   #pv .pvwrap{padding:0!important;height:auto!important;overflow:visible!important}
   #pv .pvpages{transform:none!important;margin:0!important;width:auto!important}
-  #pv .sheet{box-shadow:none!important;margin:0 auto!important;height:1118px!important;overflow:hidden!important;zoom:.84;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
-  #pv .sheet.tall{height:auto!important;overflow:visible!important}
-  #pv .sheet:last-child{page-break-after:auto;break-after:auto}
+  #pv .pgw{width:699px;height:984px;overflow:hidden;margin:0 auto;position:relative;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
+  #pv .pgw:last-child{page-break-after:auto;break-after:auto}
+  #pv .pgw>.sheet{position:absolute;top:0;left:0;width:794px!important;height:1118px!important;overflow:hidden!important;margin:0!important;box-shadow:none!important;transform:scale(.88);transform-origin:top left}
+  #pv .pgw.tall{width:auto;height:auto;overflow:visible;position:static}
+  #pv .pgw.tall>.sheet{position:static;transform:none;height:auto!important;overflow:visible!important}
 }
 </style>
 </head>
@@ -717,7 +720,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١١";
+const APP_VER = "١٤/١١ — طباعة ١٢";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -761,7 +764,7 @@ function printView(jobs,title,closeModal,fresh){
     <div class="pvh">اضغط «طباعة» مرة وحدة وانتظر ثواني حتى تطلع نافذة الطباعة، ثم اختر الطابعة وA4. لحفظ PDF أو إرساله: اضغط «طباعة» ثم زر المشاركة ⬆️ أعلى نافذة الطباعة.</div></div><div class="pvwrap"><div class="pvpages"></div></div>`;
   document.body.appendChild(pv); document.body.classList.add("pvmode");
   const host=pv.querySelector(".pvpages"), sheets=buildSheets(jobs,host);
-  sheets.forEach(sh=>{ if(+(sh.dataset.pages||1)>1) sh.classList.add("tall"); });
+  sheets.forEach(sh=>{ const w=document.createElement("div"); w.className="pgw"; if(+(sh.dataset.pages||1)>1){ sh.classList.add("tall"); w.classList.add("tall"); } sh.parentNode.insertBefore(w,sh); w.appendChild(sh); });
   const wrap=pv.querySelector(".pvwrap");
   const fit=()=>{ const vw=document.documentElement.clientWidth, z=Math.min(1,(vw-12)/794); host.style.transform=`scale(${z})`; host.style.marginLeft=Math.max(0,(vw-794*z)/2)+"px"; wrap.style.height=(host.scrollHeight*z+20)+"px"; }; fit(); addEventListener("resize",fit);
   scrollTo(0,0);
