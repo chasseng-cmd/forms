@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٩";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٠";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1769,7 +1769,7 @@ const sugModel = m => { const x=String(m||"").match(/use\s+(?:models\/)?(gemini-
 // مهلة كلية ٩٠ ثانية بدل الانتظار المفتوح
 async function gemini(file, c, onStage){
   if(onStage) onStage("تجهيز الملف");
-  const part=await prepFile(file), models=[...new Set([c.geminiModel||"gemini-3.8-flash","gemini-3.8-flash","gemini-flash-latest","gemini-flash-lite-latest","gemini-2.5-flash"])];
+  const part=await prepFile(file), models=[...new Set([bestModel()||c.geminiModel||"gemini-3.8-flash","gemini-3.8-flash","gemini-flash-latest","gemini-flash-lite-latest","gemini-2.5-flash"])];
   const end=Date.now()+150000; let last={status:-3};
   for(let mi=0;mi<models.length;mi++) for(let t=0;t<2;t++){ const model=models[mi];
     const left=end-Date.now(); if(left<5000) throw last;
@@ -1812,21 +1812,29 @@ const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slic
     : "تعذّرت قراءة الملف. صوّره بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً."+m; };
 async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح القراءة الذكية. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح القراءة الذكية.",5000); return null; } return c; }
 // فحص سريع: هل يصل الموبايل إلى Gemini؟ (طلب نصي صغير جداً)
+// يجلب قائمة النماذج المتاحة للمفتاح، يجرّبها كلها معاً بطلب صغير، ويحفظ أسرع نموذج يعمل ليُستعمل في التصوير
+const GM_KEY="gm_best"; const bestModel=()=>{ try{ return localStorage.getItem(GM_KEY)||""; }catch(e){ return ""; } };
 async function testGemini(){
-  const st=$("#phs"); const c=await getKey(); if(!c) return; const t0=Date.now();
-  const tk=setInterval(()=>{ if(st) st.innerHTML=`<span class="spin"></span> فحص الاتصال… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; },500);
-  const list=[...new Set([c.geminiModel||"gemini-3.8-flash","gemini-3.8-flash","gemini-flash-latest"])], ac=new AbortController(), to=setTimeout(()=>ac.abort(),30000);
-  let msg;
-  try{ let r,j,model;
-    for(let i=0;i<list.length&&i<5;i++){ model=list[i];
-      const call=cfg=>fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:cfg})});
-      for(const cfg of [{thinkingConfig:{thinkingLevel:"low"}},{},{thinkingConfig:{thinkingBudget:0}}]){ r=await call(cfg); j=await r.json().catch(()=>({})); if(r.status!==400||keyErr(j.error&&j.error.message)) break; }
-      if(r.status!==404) break; const sg=sugModel(j.error&&j.error.message); if(sg&&!list.includes(sg)) list.splice(i+1,0,sg); }
-    const sec=toAr(((Date.now()-t0)/1000).toFixed(1));
-    msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية). صوّر الكشف الآن.`
-               : `✖ خدمة القراءة ردّت بخطأ ${toAr(r.status)} بعد ${sec} ثانية: ${String((j.error&&j.error.message)||"").slice(0,160)}`;
-  }catch(e){ msg = e&&e.name==="AbortError" ? "✖ لا يوجد رد من خدمة القراءة خلال ٣٠ ثانية. جرّب شبكة أخرى، واستعمل «سكنر» الآن." : "✖ تعذّر الوصول إلى خدمة القراءة ("+(e&&e.message||"")+"). جرّب شبكة أخرى."; }
-  clearTimeout(to); clearInterval(tk); if(st) st.textContent=msg;
+  const st=$("#phs"); const c=await getKey(); if(!c) return; const t0=Date.now(), key=c.geminiKey.trim();
+  const tk=setInterval(()=>{ if(st&&!done) st.innerHTML=`<span class="spin"></span> فحص النماذج… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية (حتى ٤٠)`; },500); let done=false;
+  const base="https://generativelanguage.googleapis.com/v1beta/", H={"Content-Type":"application/json","x-goog-api-key":key};
+  const tfetch=(u,o,ms)=>{ const ac=new AbortController(), to=setTimeout(()=>ac.abort(),ms); return fetch(u,Object.assign({signal:ac.signal},o)).finally(()=>clearTimeout(to)); };
+  let names=[], listMsg="";
+  try{ const r=await tfetch(base+"models?pageSize=200",{headers:H},10000), j=await r.json().catch(()=>({}));
+    if(r.ok) names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>String(m.name).replace(/^models\//,"")).filter(n=>/flash/.test(n)&&!/image|tts|audio|live|embedding|robot|computer/.test(n));
+    else listMsg=`قائمة النماذج: خطأ ${toAr(r.status)} ${String((j.error&&j.error.message)||"").slice(0,100)}`;
+  }catch(e){ listMsg="قائمة النماذج: لا يوجد رد"; }
+  const pref=["gemini-3.8-flash","gemini-3.5-flash-lite","gemini-flash-lite-latest","gemini-flash-latest","gemini-3.6-flash","gemini-3.1-flash-lite","gemini-3-flash-preview"];
+  const order=[...new Set([c.geminiModel,...pref.filter(n=>!names.length||names.includes(n)),...names.slice().reverse()].filter(Boolean))].slice(0,8);
+  const one=async model=>{ const t=Date.now(); try{ let r,j;
+      for(const cfg of [{thinkingConfig:{thinkingLevel:"low"}},{}]){ r=await tfetch(base+"models/"+encodeURIComponent(model)+":generateContent",{method:"POST",headers:H,body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:cfg})},28000); j=await r.json().catch(()=>({})); if(r.status!==400||keyErr(j.error&&j.error.message)) break; }
+      return {model, ok:r.ok, st:r.status, ms:Date.now()-t, msg:String((j.error&&j.error.message)||"").slice(0,70)};
+    }catch(e){ return {model, ok:false, st:e&&e.name==="AbortError"?"لا رد":"انقطاع", ms:Date.now()-t, msg:""}; } };
+  const res=await Promise.all(order.map(one)); done=true; clearInterval(tk);
+  const good=res.filter(r=>r.ok).sort((x,y)=>x.ms-y.ms);
+  try{ if(good.length) localStorage.setItem(GM_KEY,good[0].model); else localStorage.removeItem(GM_KEY); }catch(e){}
+  const line=r=>`${r.ok?"✔":"✖"} <span dir="ltr">${r.model}</span> — ${r.ok?toAr((r.ms/1000).toFixed(1))+" ثانية":(typeof r.st==="number"?"خطأ "+toAr(r.st):r.st)+(r.msg?` <span dir="ltr" style="font-size:.8em">${r.msg.replace(/</g,"&lt;")}</span>`:"")}`;
+  if(st) st.innerHTML=(good.length?`<b>✔ يعمل. اختير النموذج الأسرع: <span dir="ltr">${good[0].model}</span>. صوّر الكشف الآن.</b>`:`<b>✖ لا يوجد نموذج يرد على هذا المفتاح/الشبكة.</b>`)+"<br>"+(listMsg?listMsg+"<br>":`النماذج المتاحة للمفتاح: ${toAr(names.length)}<br>`)+res.map(line).join("<br>");
 }
 // سكنر داخل الموبايل (Tesseract) — بدون Gemini. يقرأ الكتابة المطبوعة أفضل من اليدوية
 let tessP=null;
