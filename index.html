@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٨";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٩";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1780,16 +1780,22 @@ async function gemini(file, c, onStage){
   }
   throw last;
 }
+// إعدادات الطلب من الأحدث إلى الأبسط؛ إذا رفضت الخدمة إعداداً (خطأ ٤٠٠) ننتقل للتالي ونتذكره
+const GCFG=[ {responseMimeType:"application/json",maxOutputTokens:8192,thinkingConfig:{thinkingLevel:"low"}},
+             {responseMimeType:"application/json",maxOutputTokens:8192},
+             {responseMimeType:"application/json"},
+             {responseMimeType:"application/json",temperature:0,maxOutputTokens:8192,thinkingConfig:{thinkingBudget:0}} ];
+let gcfgI=0; const keyErr = m => /api.?key|permission|unauth|credential/i.test(m||"");
 async function gemini1(part, model, c, ms, plain){
   const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),ms||45000);
   // المفتاح بالهيدر (يشتغل للمفاتيح الجديدة AQ. والقديمة AIza)
   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},
     signal:ac.signal,
-    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:part.mime,data:part.data}}]}],generationConfig:Object.assign({responseMimeType:"application/json",temperature:0,maxOutputTokens:8192}, plain?{}:{thinkingConfig:{thinkingBudget:0}})})}).catch(e=>{ throw {status:e&&e.name==="AbortError"?-4:-5}; }).finally(()=>clearTimeout(tm));
+    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:part.mime,data:part.data}}]}],generationConfig:GCFG[gcfgI]})}).catch(e=>{ throw {status:e&&e.name==="AbortError"?-4:-5}; }).finally(()=>clearTimeout(tm));
   const j=await res.json().catch(()=>({}));
-  if(!res.ok){ const msg=(j.error&&j.error.message)||""; if(res.status===400 && !plain && /think/i.test(msg)) return gemini1(part,model,c,ms,true); throw {status:res.status, msg}; }
-  const txt=(((j.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text||"").join("")||"";
+  if(!res.ok){ const msg=(j.error&&j.error.message)||""; if(res.status===400 && !keyErr(msg) && (plain||0)<GCFG.length-1){ gcfgI=(gcfgI+1)%GCFG.length; return gemini1(part,model,c,ms,(plain||0)+1); } throw {status:res.status, msg}; }
+  const txt=(((j.candidates||[])[0]||{}).content||{}).parts?.filter(p=>!p.thought).map(p=>p.text||"").join("")||"";
   let out; try{ out=JSON.parse(txt.replace(/^```json|```$/g,"").trim()); }catch(e){ const a=txt.indexOf("{"), b=txt.lastIndexOf("}"); out=JSON.parse(txt.slice(a,b+1)); }
   const rows=Array.isArray(out.rows)?out.rows.map(r=>({o:String(r.o||"").trim(),d:String(r.d||"").replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g,"$1").trim(),q:toEn(r.q||""),u:String(r.u||"عدد").replace(/جمل[ةه]/g,"").trim()||"عدد",p:r.store?"":toEn(r.p||"").replace(/[^\d.]/g,""),store:!!r.store})).filter(r=>r.d):[];
   if(!rows.length && !out.title) throw {status:0};
@@ -1797,7 +1803,8 @@ async function gemini1(part, model, c, ms, plain){
 }
 const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slice(0,120)})`:"";
   return st===429?"انتهى الحد المجاني للقراءة الذكية مؤقتاً، حاول بعد دقيقة."+m
-    : st===400||st===401||st===403?"مفتاح القراءة الذكية غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
+    : (st===400&&keyErr(e.msg))||st===401||st===403?"مفتاح القراءة الذكية غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
+    : st===400?"خدمة القراءة رفضت الطلب."+m
     : st===404?"نموذج القراءة غير موجود. امسح خانة النموذج في الإعدادات."+m
     : st===-2?"الملف كبير جداً (أكثر من ١٨ ميغا). صوّره بدقة أقل."
     : st===-3||st===-4?"انتهت المهلة (دقيقتان ونصف) بدون رد من خدمة القراءة. تأكد من الإنترنت وحاول مرة أخرى."
@@ -1813,8 +1820,7 @@ async function testGemini(){
   try{ let r,j,model;
     for(let i=0;i<list.length&&i<5;i++){ model=list[i];
       const call=cfg=>fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:cfg})});
-      r=await call({maxOutputTokens:20,thinkingConfig:{thinkingBudget:0}}); j=await r.json().catch(()=>({}));
-      if(r.status===400&&/think/i.test((j.error&&j.error.message)||"")){ r=await call({maxOutputTokens:200}); j=await r.json().catch(()=>({})); }
+      for(const cfg of [{thinkingConfig:{thinkingLevel:"low"}},{},{thinkingConfig:{thinkingBudget:0}}]){ r=await call(cfg); j=await r.json().catch(()=>({})); if(r.status!==400||keyErr(j.error&&j.error.message)) break; }
       if(r.status!==404) break; const sg=sugModel(j.error&&j.error.message); if(sg&&!list.includes(sg)) list.splice(i+1,0,sg); }
     const sec=toAr(((Date.now()-t0)/1000).toFixed(1));
     msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية). صوّر الكشف الآن.`
