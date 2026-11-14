@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٥ سكنر";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٦ سكنر جدول";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1161,7 +1161,7 @@ async function renderAdmin(){
     const c={...GLOBAL_DEFAULT,...CFG.app};
     box.innerHTML=`<div class="card"><h3>قراءة صورة الكشف (اختياري)</h3>
       <div class="hint">مفتاح مجاني من <b dir="ltr">aistudio.google.com/apikey</b>. بدونه تُكتب الفقرات يدوياً. ملاحظة: في الخطة المجانية Google قد تستخدم الصور لتحسين خدماتها.</div>
-      <label class="f">مفتاح Gemini</label><input class="i" id="gk" dir="ltr" value="${esc(c.geminiKey||"")}" placeholder="AQ.… أو AIza…">
+      <label class="f">مفتاح القراءة الذكية</label><input class="i" id="gk" dir="ltr" value="${esc(c.geminiKey||"")}" placeholder="AQ.… أو AIza…">
       <label class="f">النموذج (اتركه كما هو إن لم تكن متأكداً)</label><input class="i" id="gm" dir="ltr" value="${esc(c.geminiModel||"")}" placeholder="gemini-flash-latest"></div>
       <div class="card"><h3>أرقام الواتساب للتبليغ</h3><div class="hint">عند إرسال الكشف بالواتساب تُفتح رسالة جاهزة. إذا كتبت رقماً (مثل 9647801234567) تذهب الرسالة إليه مباشرة، وإذا تُرك فارغاً تختار الشخص أو المجموعة بنفسك.</div>
       <label class="f">رقم واتساب رئيس القسم</label><input class="i" id="waH" dir="ltr" inputmode="tel" value="${esc(c.whatsappHead||"")}">
@@ -1335,7 +1335,7 @@ function renderEdit(){
       <button class="btn" id="topen">⚖️ فتح محضر التثمين وإدخال الأوزان والأسعار</button></div>`; }
   h+=notesHTML(k);
   if(curId) h+=`<details class="card" id="kchatd" ${chatUnread(k)?"open":""}><summary style="cursor:pointer;font-weight:800;color:var(--blue)">💬 دردشة على هذا الكشف${k.lastChat?` <span class="hint">(آخر رسالة: ${esc(k.lastChat.by)})</span>`:""}${chatUnread(k)?` <span class="badge b-ret">جديدة</span>`:""}</summary><div id="kchat"></div></details>`;
-  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph"><span class="em">📷</span> صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويملأ النطاق والفقرات. إذا كان الكشف أكثر من ورقة، فاختر صفحاته جميعاً معاً.</div><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn sec" style="flex:1" id="scn">🖨️ سكنر بدون Gemini</button><button class="btn sec" style="flex:1" id="gtest">🔌 فحص الاتصال</button></div><input type="file" id="scf" accept="image/*" hidden>`;
+  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph"><span class="em">📷</span> صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويملأ النطاق والفقرات. إذا كان الكشف أكثر من ورقة، فاختر صفحاته جميعاً معاً.</div><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn sec" style="flex:1" id="scn">🖨️ سكنر</button><button class="btn sec" style="flex:1" id="gtest">🔌 فحص الاتصال</button></div><input type="file" id="scf" accept="image/*" hidden>`;
   h+=`<div class="card"><div class="grid"><div><label class="f">رقم الكشف</label>${ro?`<div class="v">${esc(toAr(k.no))||"—"}</div>`:`<input class="i" id="no" inputmode="numeric" value="${esc(k.no)}">`}</div>
      <div><label class="f">رقم محضر التسعير</label>${rev&&committeeMatches(k)?`<input class="i" id="tno" inputmode="numeric" value="${esc(k.tasirNo||"")}" placeholder="تكتبه لجنة الاعتدال">`:`<div class="v">${esc(toAr(k.tasirNo))||"—"}</div>`}</div></div>
      <label class="f">نطاق الكشف (اسم العمل)</label>${ro?`<div class="v">${esc(k.title)}</div>`:`<textarea class="i ${tChanged?'changed':''}" id="title" placeholder="مثال: صيانة مضخة الدفع الأولى نوع (ebara) التابعة إلى مشروع ماء القادسية المركزي">${esc(k.title)}</textarea>${tChanged?`<div class="chg">${esc(k.orig.title)}</div>`:""}`}
@@ -1771,7 +1771,7 @@ async function gemini(file, c, onStage){
   const end=Date.now()+150000; let last={status:-3};
   for(const model of models) for(let t=0;t<2;t++){
     const left=end-Date.now(); if(left<5000) throw last;
-    if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال إلى Gemini وانتظار الرد");
+    if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال الصورة وانتظار القراءة");
     try{ return await gemini1(part,model,c,Math.min(90000,left)); }
     catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===404) break;
       await new Promise(r=>setTimeout(r,e&&e.status===429?6000:1500)); }
@@ -1794,14 +1794,14 @@ async function gemini1(part, model, c, ms, plain){
   return {no:out.no?toEn(out.no):"", title:String(out.title||"").trim(), rows};
 }
 const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slice(0,120)})`:"";
-  return st===429?"انتهى الحد المجاني لـ Gemini مؤقتاً، حاول بعد دقيقة."+m
-    : st===400||st===401||st===403?"مفتاح Gemini غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
-    : st===404?"نموذج Gemini غير موجود. امسح خانة النموذج في الإعدادات."+m
+  return st===429?"انتهى الحد المجاني للقراءة الذكية مؤقتاً، حاول بعد دقيقة."+m
+    : st===400||st===401||st===403?"مفتاح القراءة الذكية غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
+    : st===404?"نموذج القراءة غير موجود. امسح خانة النموذج في الإعدادات."+m
     : st===-2?"الملف كبير جداً (أكثر من ١٨ ميغا). صوّره بدقة أقل."
-    : st===-3||st===-4?"انتهت المهلة (دقيقتان ونصف) بدون رد من Gemini. تأكد من الإنترنت وحاول مرة أخرى."
-    : st===-5?"تعذّر الاتصال بـ Gemini. تأكد من الإنترنت أو جرّب الواي فاي."
+    : st===-3||st===-4?"انتهت المهلة (دقيقتان ونصف) بدون رد من خدمة القراءة. تأكد من الإنترنت وحاول مرة أخرى."
+    : st===-5?"تعذّر الاتصال بخدمة القراءة. تأكد من الإنترنت أو جرّب الواي فاي."
     : "تعذّرت قراءة الملف. صوّره بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً."+m; };
-async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح Gemini. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح Gemini.",5000); return null; } return c; }
+async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح القراءة الذكية. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح القراءة الذكية.",5000); return null; } return c; }
 // فحص سريع: هل يصل الموبايل إلى Gemini؟ (طلب نصي صغير جداً)
 async function testGemini(){
   const st=$("#phs"); const c=await getKey(); if(!c) return; const t0=Date.now();
@@ -1810,9 +1810,9 @@ async function testGemini(){
   let msg;
   try{ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:{maxOutputTokens:20,thinkingConfig:{thinkingBudget:0}}})});
     const j=await r.json().catch(()=>({})), sec=toAr(((Date.now()-t0)/1000).toFixed(1));
-    msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية، النموذج ${model}). المشكلة إذن في رفع الصورة: جرّب الواي فاي أو «سكنر بدون Gemini».`
-               : `✖ Gemini ردّ بخطأ ${toAr(r.status)} بعد ${sec} ثانية: ${String((j.error&&j.error.message)||"").slice(0,160)}`;
-  }catch(e){ msg = e&&e.name==="AbortError" ? "✖ لا يوجد رد من Gemini خلال ٣٠ ثانية. الشبكة لا توصل إلى خوادم Gemini (جرّب شبكة أخرى أو VPN)، واستعمل «سكنر بدون Gemini» الآن." : "✖ تعذّر الوصول إلى Gemini إطلاقاً ("+(e&&e.message||"")+"). جرّب شبكة أخرى، واستعمل «سكنر بدون Gemini» الآن."; }
+    msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية). المشكلة إذن في رفع الصورة: جرّب الواي فاي أو «سكنر».`
+               : `✖ خدمة القراءة ردّت بخطأ ${toAr(r.status)} بعد ${sec} ثانية: ${String((j.error&&j.error.message)||"").slice(0,160)}`;
+  }catch(e){ msg = e&&e.name==="AbortError" ? "✖ لا يوجد رد من خدمة القراءة خلال ٣٠ ثانية. الشبكة لا توصل إلى خوادم القراءة (جرّب شبكة أخرى أو VPN)، واستعمل «سكنر بدون Gemini» الآن." : "✖ تعذّر الوصول إلى خدمة القراءة إطلاقاً ("+(e&&e.message||"")+"). جرّب شبكة أخرى، واستعمل «سكنر بدون Gemini» الآن."; }
   clearTimeout(to); clearInterval(tk); if(st) st.textContent=msg;
 }
 // سكنر داخل الموبايل (Tesseract) — بدون Gemini. يقرأ الكتابة المطبوعة أفضل من اليدوية
@@ -1893,25 +1893,253 @@ function parseCols(data){
   }
   return {title:title.trim(), rows:rows.filter(r=>r.d.length>1)};
 }
+// ===== سكنر الجدول: يكتشف خطوط الجدول، يقص كل خانة، يقرأ الأرقام بمطابقة أشكال الأرقام العربية، والكتابة بـ Tesseract =====
+const SC = (() => {
+  const MAXW = 1700;
+  function toCanvas(img) {
+    const s = Math.min(1, MAXW / Math.max(img.width, img.height) * 1.0), c = document.createElement("canvas");
+    // نخلي العرض حوالي ١٧٠٠
+    const k = MAXW / img.width; const sc = Math.min(2, k);
+    c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+    const g = c.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height); return c;
+  }
+  function gray(c) {
+    const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data, n = c.width * c.height, a = new Uint8ClampedArray(n);
+    for (let i = 0; i < n; i++) a[i] = (d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114) | 0; return a;
+  }
+  // عتبة تكيفية (متوسط محلي) ← 1 = حبر
+  function binar(a, W, H, r = 15, C = 12) {
+    const I = new Float64Array((W + 1) * (H + 1));
+    for (let y = 0; y < H; y++) { let s = 0; for (let x = 0; x < W; x++) { s += a[y * W + x]; I[(y + 1) * (W + 1) + x + 1] = I[y * (W + 1) + x + 1] + s; } }
+    const b = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) { const y0 = Math.max(0, y - r), y1 = Math.min(H, y + r + 1);
+      for (let x = 0; x < W; x++) { const x0 = Math.max(0, x - r), x1 = Math.min(W, x + r + 1);
+        const m = (I[y1 * (W + 1) + x1] - I[y0 * (W + 1) + x1] - I[y1 * (W + 1) + x0] + I[y0 * (W + 1) + x0]) / ((x1 - x0) * (y1 - y0));
+        b[y * W + x] = a[y * W + x] < m - C ? 1 : 0; } }
+    return b;
+  }
+  // زاوية الميلان: أعلى تباين لمجاميع الصفوف
+  function skew(b, W, H) {
+    const st = 4, w = Math.floor(W / st), h = Math.floor(H / st); let best = 0, bv = -1;
+    for (let ang = -5; ang <= 5.001; ang += 0.25) { const t = Math.tan(ang * Math.PI / 180), rs = new Float64Array(h + 200);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (b[(y * st) * W + x * st]) { const yy = Math.round(y - x * t) + 100; if (yy >= 0 && yy < rs.length) rs[yy]++; }
+      let v = 0; for (const q of rs) v += q * q; if (v > bv) { bv = v; best = ang; } }
+    return best;
+  }
+  function rotate(c, ang) {
+    if (Math.abs(ang) < 0.2) return c; const r = ang * Math.PI / 180, o = document.createElement("canvas"); o.width = c.width; o.height = c.height;
+    const g = o.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#fff"; g.fillRect(0, 0, o.width, o.height);
+    g.translate(o.width / 2, o.height / 2); g.rotate(-r); g.drawImage(c, -c.width / 2, -c.height / 2); return o;
+  }
+  // خطوط أفقية/عمودية: سلاسل حبر طويلة. العمودي يُقبل فقط إذا لامس خطاً أفقياً (حتى لا تنحسب الألف واللام خطوطاً)
+  function lines(b, W, H) {
+    const hm = new Uint8Array(W * H), m = new Uint8Array(W * H), LH = Math.round(W / 10), LV = Math.round(H / 80);
+    for (let y = 0; y < H; y++) { let s = -1, gap = 0;
+      for (let x = 0; x <= W; x++) { const on = x < W && (b[y * W + x] || (y > 0 && b[(y - 1) * W + x]) || (y < H - 1 && b[(y + 1) * W + x]));
+        if (on) { if (s < 0) s = x; gap = 0; } else if (s >= 0 && ++gap > 3) { const e = x - gap; if (e - s >= LH) for (let k = s; k <= e; k++) hm[y * W + k] = 1; s = -1; gap = 0; } } }
+    const nearH = (x, y) => { for (let dy = -6; dy <= 6; dy++) { const yy = y + dy; if (yy < 0 || yy >= H) continue; for (let dx = -2; dx <= 2; dx++) { const xx = x + dx; if (xx >= 0 && xx < W && hm[yy * W + xx]) return true; } } return false; };
+    for (let x = 0; x < W; x++) { let s = -1, gap = 0;
+      for (let y = 0; y <= H; y++) { const on = y < H && (b[y * W + x] || (x > 0 && b[y * W + x - 1]) || (x < W - 1 && b[y * W + x + 1]));
+        if (on) { if (s < 0) s = y; gap = 0; } else if (s >= 0 && ++gap > 3) { const e = y - gap; if (e - s >= LV && (nearH(x, s) || nearH(x, e))) for (let k = s; k <= e; k++) m[k * W + x] = 1; s = -1; gap = 0; } } }
+    for (let i = 0; i < W * H; i++) if (hm[i]) m[i] = 1;
+    const d = new Uint8Array(W * H);
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (m[y * W + x]) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) d[(y + dy) * W + x + dx] = 1;
+    return d;
+  }
+  // مكونات متصلة (للقيمة v)
+  function comps(m, W, H, v, x0 = 0, y0 = 0, x1 = W, y1 = H) {
+    const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0) return [];
+    const lab = new Int32Array(w * h).fill(-1), out = [], q = new Int32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (m[(y + y0) * W + x + x0] !== v || lab[i] >= 0) continue;
+      let hd = 0, t = 0; q[t++] = i; lab[i] = out.length; const a = { x0: x + x0, x1: x + x0, y0: y + y0, y1: y + y0, n: 0, edge: false };
+      while (hd < t) { const j = q[hd++], jx = j % w, jy = (j / w) | 0; a.n++;
+        const X = jx + x0, Y = jy + y0; if (X < a.x0) a.x0 = X; if (X > a.x1) a.x1 = X; if (Y < a.y0) a.y0 = Y; if (Y > a.y1) a.y1 = Y;
+        if (jx === 0 || jy === 0 || jx === w - 1 || jy === h - 1) a.edge = true;
+        if (jx > 0) { const z = j - 1; if (lab[z] < 0 && m[(jy + y0) * W + jx - 1 + x0] === v) { lab[z] = out.length; q[t++] = z; } }
+        if (jx < w - 1) { const z = j + 1; if (lab[z] < 0 && m[(jy + y0) * W + jx + 1 + x0] === v) { lab[z] = out.length; q[t++] = z; } }
+        if (jy > 0) { const z = j - w; if (lab[z] < 0 && m[(jy - 1 + y0) * W + jx + x0] === v) { lab[z] = out.length; q[t++] = z; } }
+        if (jy < h - 1) { const z = j + w; if (lab[z] < 0 && m[(jy + 1 + y0) * W + jx + x0] === v) { lab[z] = out.length; q[t++] = z; } } }
+      out.push(a); }
+    return out;
+  }
+  // يرجع خانات الجدول مرتبة صفوف (كل صف من اليمين لليسار)
+  function grid(gm, W, H) {
+    const cand = comps(gm, W, H, 1).filter(g => (g.x1 - g.x0) > W * 0.35 && (g.y1 - g.y0) > H * 0.05).sort((a, b) => b.n - a.n).slice(0, 4);
+    let best = null;
+    for (const g of cand) {
+      const cells = comps(gm, W, H, 0, g.x0, g.y0, g.x1 + 1, g.y1 + 1).filter(c => !c.edge && (c.x1 - c.x0) > 12 && (c.y1 - c.y0) > 12 && (c.y1 - c.y0) < H * 0.2 && c.n > 0.45 * (c.x1 - c.x0) * (c.y1 - c.y0));
+      cells.sort((a, b) => (a.y0 + a.y1) - (b.y0 + b.y1)); const rows = [];
+      for (const c of cells) { const cy = (c.y0 + c.y1) / 2, r = rows[rows.length - 1];
+        if (r && Math.abs(r.cy - cy) < Math.min(r.h, c.y1 - c.y0) * 0.5) r.cells.push(c); else rows.push({ cy, h: c.y1 - c.y0, cells: [c] }); }
+      rows.forEach(r => r.cells.sort((a, b) => b.x0 - a.x0));
+      const score = rows.filter(r => r.cells.length >= 4).length;
+      if (!best || score > best.score) best = { box: g, rows, score };
+    }
+    return best && best.score >= 2 ? best : null;
+  }
+  // ===== قراءة الأرقام العربية بمطابقة الأشكال =====
+  const N = 16; let TPL = null;
+  function norm(m, W, c) { // m=binary, c=component bbox → vector N*N
+    const w = c.x1 - c.x0 + 1, h = c.y1 - c.y0 + 1, s = Math.max(w, h), v = new Float32Array(N * N);
+    const ox = (s - w) / 2, oy = (s - h) / 2;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (m[(c.y0 + y) * W + c.x0 + x]) { const X = Math.min(N - 1, ((x + ox) / s * N) | 0), Y = Math.min(N - 1, ((y + oy) / s * N) | 0); v[Y * N + X] += 1; }
+    let mx = 0; for (const q of v) mx = Math.max(mx, q); if (mx) for (let i = 0; i < v.length; i++) v[i] = Math.min(1, v[i] / (mx * 0.5)); return v;
+  }
+  function templates() {
+    if (TPL) return TPL; TPL = [];
+    const fonts = ['bold 60px "Times New Roman"', 'bold 60px serif', 'bold 60px Arial', 'bold 60px "Geeza Pro"', '60px "Times New Roman"', 'bold 60px sans-serif'];
+    for (const f of fonts) { const c = document.createElement("canvas"); c.width = 900; c.height = 120; const g = c.getContext("2d", { willReadFrequently: true });
+      g.fillStyle = "#fff"; g.fillRect(0, 0, 900, 120); g.fillStyle = "#000"; g.font = f; g.textBaseline = "middle";
+      for (const set of ["٠١٢٣٤٥٦٧٨٩", "0123456789"]) { g.fillStyle = "#fff"; g.fillRect(0, 0, 900, 120); g.fillStyle = "#000";
+      const xs = []; for (let d = 0; d < 10; d++) { g.fillText(set[d], 30 + d * 85, 60); xs.push(30 + d * 85); }
+      const a = gray(c), b = new Uint8Array(a.length); for (let i = 0; i < a.length; i++) b[i] = a[i] < 128 ? 1 : 0;
+      const cs = comps(b, 900, 120, 1).filter(q => q.n > 4); let ref = 0;
+      const per = xs.map((x, d) => cs.filter(q => q.x0 >= x - 10 && q.x0 < x + 75).sort((p, q) => q.n - p.n)[0]);
+      const one = per[1]; ref = one ? one.y1 - one.y0 + 1 : 40;
+      const wz = set === "0123456789"; if (wz) { const ar1 = TPL.filter(t => !t.w && t.f === f && t.d === 1)[0]; }
+      per.forEach((q, d) => { if (q) TPL.push({ d, f, w: wz, v: norm(b, 900, q), rh: (q.y1 - q.y0 + 1) / ref, ar: (q.x1 - q.x0 + 1) / (q.y1 - q.y0 + 1) }); }); } }
+    return TPL;
+  }
+  function classify(b, W, c, Hd, west) {
+    const v = norm(b, W, c), rh = (c.y1 - c.y0 + 1) / Hd, ar = (c.x1 - c.x0 + 1) / (c.y1 - c.y0 + 1); let best = null, bd = 1e9;
+    for (const t of templates()) { if (west !== undefined && t.w !== west) continue; let s = 0; for (let i = 0; i < v.length; i++) { const e = v[i] - t.v[i]; s += e * e; }
+      s = s / v.length + 0.6 * (rh - t.rh) ** 2 + 0.15 * Math.min(4, (Math.log(ar / t.ar)) ** 2); if (s < bd) { bd = s; best = t.d; } }
+    return { d: best, e: bd };
+  }
+  // مكونات الحبر داخل خانة (بعيداً عن حدودها)
+  function inkComps(b, W, c) {
+    const p = 4, x0 = c.x0 + p, y0 = c.y0 + p, x1 = c.x1 - p, y1 = c.y1 - p; if (x1 - x0 < 4 || y1 - y0 < 4) return [];
+    return comps(b, W, (b.length / W) | 0, 1, x0, y0, x1, y1).filter(q => q.n >= 6);
+  }
+  function readNumber(b, W, c, Hd) {
+    let cs = inkComps(b, W, c).filter(q => (q.y1 - q.y0 + 1) > Hd * 0.18 || q.n > Hd * 0.6);
+    if (!cs.length) return { v: "", conf: 1 };
+    // الأرقام تكتب يسار←يمين
+    const midY = cs.reduce((s, q) => s + (q.y0 + q.y1) / 2, 0) / cs.length;
+    cs = cs.filter(q => Math.abs((q.y0 + q.y1) / 2 - midY) < Hd * 0.9).sort((a, b2) => a.x0 - b2.x0);
+    // أرقام ملتصقة (صورة مضببة): نقسم المكون العريض
+    const parts = []; for (const q of cs) { const w = q.x1 - q.x0 + 1, h = q.y1 - q.y0 + 1, k = h > Hd * 0.6 ? Math.round(w / (h * 0.62)) : 1;
+      if (k >= 2 && k <= 7) { for (let i = 0; i < k; i++) { const a = Math.round(q.x0 + i * w / k), z = Math.round(q.x0 + (i + 1) * w / k) - 1; parts.push({ x0: a, x1: z, y0: q.y0, y1: q.y1, n: q.n / k }); } } else parts.push(q); }
+    cs = parts;
+    if (cs.length > 9) return { v: "", text: true, conf: 0 };
+    const run = west => { let s = "", err = 0, sum = 0; for (const q of cs) { const r = classify(b, W, q, Hd, west); s += r.d; err = Math.max(err, r.e); sum += r.e; } return { s, err, sum }; };
+    const A = run(false), E = run(true), useW = E.sum < A.sum * 0.8, R = useW ? E : A;
+    const z = x => x.replace(/^0+(?=\d)/, ""); return { v: z(R.s), alt: [z(A.s), z(E.s)], west: useW, conf: R.err };
+  }
+  function crop(c, r, scale = 2) {
+    const p = 3, w = r.x1 - r.x0 - 2 * p, h = r.y1 - r.y0 - 2 * p, o = document.createElement("canvas"); o.width = Math.max(1, w * scale); o.height = Math.max(1, h * scale);
+    const g = o.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, o.width, o.height); g.imageSmoothingQuality = "high";
+    g.drawImage(c, r.x0 + p, r.y0 + p, w, h, 0, 0, o.width, o.height); return o;
+  }
+  // تنظيف خانة النص: أبيض/أسود + هامش
+  function clean(c) {
+    const W = c.width, H = c.height, a = gray(c), b = binar(a, W, H, 20, 10), o = document.createElement("canvas"); o.width = W + 40; o.height = H + 40;
+    const g = o.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, o.width, o.height); const im = g.getImageData(20, 20, W, H);
+    for (let i = 0; i < W * H; i++) { const v = b[i] ? 0 : 255; im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = v; im.data[i * 4 + 3] = 255; }
+    g.putImageData(im, 20, 20); return o;
+  }
+  const UNITS = /(عدد|متر\s*مربع|متر\s*مكعب|متر|م٢|م٣|م2|م3|كغم|كيلو\s*غرام|كيلوغرام|كيلواط|لتر|طن|قطعة|قطعه|زوج|لفة|لفه|كيس|علبة|علبه|برميل|سيت|طقم|ساعة|ساعه|يوم|كغ)/;
+  const tidy = t => String(t || "").replace(/\n+/g, " ").replace(/[|_\[\]{}<>“”"‘’`~^*#@$%&\\]/g, " ").replace(/[‎‏‪-‮]/g, "").replace(/\s+/g, " ").trim();
+
+  const AD = "٠١٢٣٤٥٦٧٨٩";
+  // يقرأ خانة نص؛ الكلمات اللي هي أرقام تنقرأ من جديد بمطابقة الأشكال
+  async function cellText(c, b, W, r, ocr, psm, Hd, lang) {
+    const p = 3; let sc = 2, res = await ocr(clean(crop(c, r, sc)), psm, lang);
+    const T = x => typeof x === "string" ? x : (x && x.text) || "", nl = x => T(x).split(/\n/).filter(l => /[\u0621-\u064A]{2}/.test(l)).length;
+    // عدد أسطر الكتابة الفعلي بالخانة؛ إذا Tesseract فوّت سطر نعيد بحجم آخر
+    if (Hd) { const Hh = (b.length / W) | 0; let bands = 0, inb = 0, gap = 0;
+      for (let y = r.y0 + 5; y < r.y1 - 4; y++) { let k = 0; for (let x = r.x0 + 5; x < r.x1 - 4; x++) k += b[y * W + x]; if (k > 2) { inb++; gap = 0; } else if (inb && ++gap > Hd * 0.1) { if (inb > Hd * 0.6) bands++; inb = 0; gap = 0; } }
+      if (inb > Hd * 0.6) bands++;
+      { let top = -1, bot = -1; for (let y = r.y0 + 5; y < r.y1 - 4; y++) { let k = 0; for (let x = r.x0 + 5; x < r.x1 - 4; x++) k += b[y * W + x]; if (k > 2) { if (top < 0) top = y; bot = y; } }
+        if (top >= 0) bands = Math.max(bands, Math.round((bot - top) / (Hd * 1.6))); }
+      for (const s2 of [1.4, 2.8, 1]) { if (nl(res) >= bands) break; const r2 = await ocr(clean(crop(c, r, s2)), psm, lang); if (nl(r2) > nl(res) || (nl(r2) === nl(res) && T(r2).length > T(res).length * 1.2)) { res = r2; sc = s2; } } }
+    let text = T(res); const words = (res && res.words) || [];
+    if (Hd) for (const w of words) { const t = String(w.text || "").trim();
+      if (!t || /[\u0621-\u064A]/.test(t) || !/[0-9٠-٩]/.test(t) && !/^[|lIoOYVAr\/]{1,4}$/.test(t) || t.length > 9) continue;
+      const box = { x0: Math.max(r.x0, Math.round((w.x0 - 20) / sc + r.x0 + p) - 2), x1: Math.min(r.x1, Math.round((w.x1 - 20) / sc + r.x0 + p) + 2), y0: Math.max(r.y0, Math.round((w.y0 - 20) / sc + r.y0 + p) - 2), y1: Math.min(r.y1, Math.round((w.y1 - 20) / sc + r.y0 + p) + 2) };
+      const cs = comps(b, W, (b.length / W) | 0, 1, box.x0, box.y0, box.x1, box.y1).filter(q => q.n >= 6 && (q.y1 - q.y0 + 1) > Hd * 0.18);
+      if (!cs.length || cs.length > 8) continue; cs.sort((a, b2) => a.x0 - b2.x0);
+      const run = west => { let s = "", sum = 0; for (const q of cs) { const k = classify(b, W, q, Hd, west); s += k.d; sum += k.e; } return { s, sum }; };
+      const A = run(false), E = run(true), useW = E.sum < A.sum * 0.8; if ((useW ? E : A).sum / cs.length > 0.4) continue;
+      if (/^[0-9]{3,}$/.test(t) && E.s === t) continue; // رقم إنكليزي قرأه Tesseract صح
+      const nv = useW ? E.s : A.s.replace(/\d/g, d => AD[d]); const tail = t.match(/[\/\-]$/) ? "" : "";
+      text = text.replace(t, nv + tail); }
+    return tidy(text).replace(/تجهبز|تجهيبز|نجهيز|تجهير/g, "تجهيز").replace(/منشا(?=\s|$)/g, "منشأ");
+  }
+  async function scan(img, ocr, prog) {
+    // ocr(canvas, psm) → text
+    let c = toCanvas(img), W = c.width, H = c.height; prog && prog("تجهيز الصورة");
+    let b = binar(gray(c), W, H); const ang = skew(b, W, H);
+    if (Math.abs(ang) >= 0.2) { c = rotate(c, ang); b = binar(gray(c), W, H); }
+    prog && prog("كشف خطوط الجدول");
+    const G = grid(lines(b, W, H), W, H); if (!G || G.rows.length < 2) return null;
+    // صف العناوين = أول صف فيه ≥٤ خانات
+    const hi = G.rows.findIndex(r => r.cells.length >= 4); if (hi < 0) return null;
+    const head = G.rows[hi].cells; const nc = head.length;
+    // أسماء الأعمدة من مواقعها (يمين←يسار): ت، تفاصيل، كمية، وحدة، سعر، كلي — نتعرف على أعرض خانة = التفاصيل
+    const widths = head.map(q => q.x1 - q.x0), di = widths.indexOf(Math.max(...widths));
+    const roles = head.map((q, i) => i < di ? "n" : i === di ? "d" : ["q", "u", "p", "t"][i - di - 1] || "x");
+    const colOf = q => { const cx = (q.x0 + q.x1) / 2; let k = -1, bo = 0; head.forEach((h, i) => { const o = Math.min(q.x1, h.x1) - Math.max(q.x0, h.x0); if (o > bo) { bo = o; k = i; } }); return k; };
+    // ارتفاع الرقم المرجعي من خانات الكمية/السعر
+    const numCells = []; G.rows.slice(hi + 1).forEach(r => r.cells.forEach(q => { const k = colOf(q); if (k >= 0 && /[qpt]/.test(roles[k]) && (q.x1 - q.x0) < (head[k].x1 - head[k].x0) * 1.5) numCells.push(q); }));
+    const hs = []; numCells.forEach(q => inkComps(b, W, q).forEach(z => hs.push(z.y1 - z.y0 + 1))); hs.sort((a, b2) => a - b2);
+    const Hd = hs.length ? hs[Math.floor(hs.length * 0.85)] : 20;
+    // النطاق: النص فوق الجدول
+    let title = "", t0; try { prog && prog("قراءة النطاق");
+      const top = { x0: 0, y0: 0, x1: W - 1, y1: Math.max(10, G.box.y0 - 4) }; const t = tidy(typeof (t0 = await ocr(clean(crop(c, top, 1.4)), 6, "ara+eng")) === "string" ? t0 : t0.text);
+      const m = t.match(/نطاق\s*ا?لكشف\s*[\/:\-]?\s*(.+)/); title = m ? m[1].replace(/محافظ[ةه]\s*النجف|مديري[ةه]\s*ماء\s*النجف|مركز\s*تشغيل.*$/g, "").replace(/\s+/g, " ").trim() : ""; } catch (e) {}
+    const rows = []; const body = G.rows.slice(hi + 1);
+    for (let ri = 0; ri < body.length; ri++) {
+      const r = body[ri]; prog && prog(`قراءة الفقرة ${ri + 1} من ${body.length}`);
+      const byRole = {}; r.cells.forEach(q => { const k = colOf(q); if (k >= 0) { const big = (q.x1 - q.x0) > (head[k].x1 - head[k].x0) * 1.6; byRole[big ? "span" : roles[k]] = q; } });
+      if (byRole.span || !byRole.d) { const tx = byRole.span ? tidy((x => typeof x === "string" ? x : x.text)(await ocr(clean(crop(c, byRole.span)), 6))) : ""; if (/المجموع|لاغير|فقط/.test(tx) || byRole.span) break; continue; }
+      let d = (await cellText(c, b, W, byRole.d, ocr, 6, Hd)).replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g, "$1").trim();
+      if (/المجموع|لاغيرها/.test(d)) break;
+      const num = k => byRole[k] ? readNumber(b, W, byRole[k], Hd) : { v: "" };
+      let q = num("q"), p = num("p"), t = num("t"), store = false;
+      if (p.text || t.text || p.conf > 0.36 || t.conf > 0.36) { const tx = tidy((x => typeof x === "string" ? x : x.text)(await ocr(clean(crop(c, byRole[p.text ? "p" : "t"])), 6))); if (/مخزن|اخراج|إخراج|خراج|مخز/.test(tx)) store = true; }
+      let u = "عدد"; if (byRole.u) { const tx = tidy((x => typeof x === "string" ? x : x.text)(await ocr(clean(crop(c, byRole.u)), 7))); const m = tx.match(UNITS); u = m ? m[1].replace(/\s+/g, " ") : (tx.replace(/[^؀-ۿ ]/g, "").trim() || "عدد"); if (u === "قطعه") u = "قطعة"; }
+      let Q = q.v, P = store ? "" : p.v, T = t.v;
+      // نختار القراءة (عربي/إنكليزي) اللي يتطابق بيها الحساب: الكمية × السعر = الكلي
+      if (!store && q.alt && p.alt && t.alt) { let hit = null; for (const a of q.alt) for (const bb of p.alt) for (const cc of t.alt) if (!hit && +a && +bb && +a * +bb === +cc) hit = [a, bb, cc]; if (hit) [Q, P, T] = hit; } const bad = !store && (!Q || !P || !T || +Q * +P !== +T);
+      // تصحيح بسيط بالحساب
+      if (!store && Q && T && (!P || +Q * +P !== +T) && +Q && +T % +Q === 0) P = String(+T / +Q);
+      else if (!store && P && T && (!Q || +Q * +P !== +T) && +P && +T % +P === 0) Q = String(+T / +P);
+      if (!d && !Q && !P) continue;
+      if (!d && rows.length) { rows[rows.length - 1].d += ""; continue; }
+      rows.push({ d, q: Q, u, p: P, store, chk: store || !!(Q && P && T && +Q * +P === +T) });
+    }
+    return { title, rows, angle: ang };
+  }
+  return { scan, _t: { toCanvas, gray, binar, skew, rotate, lines, grid, readNumber, inkComps, templates, crop, clean } };
+})();
+
 async function scanOCR(file){
-  const st=$("#phs"), t0=Date.now(); let stage="تحميل السكنر (أول مرة فقط ~٣ ميغا)", pct="";
+  const st=$("#phs"), t0=Date.now(); let stage="تحميل السكنر (أول مرة فقط)", pct="";
   const draw=()=>{ if(st) st.innerHTML=`<span class="spin"></span> ${stage}${pct?` ${pct}`:""}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; }; draw(); const tk=setInterval(draw,1000);
-  let w;
+  const workers={};
+  const getW=async lang=>{ if(!workers[lang]){ stage=lang==="ara"?"تحميل اللغة العربية":"تحميل الإنكليزي"; draw(); workers[lang]=await Tesseract.createWorker(lang.split("+"),1); await workers[lang].setParameters({preserve_interword_spaces:"1"}); } return workers[lang]; };
+  const ocr=async(canvas,psm,lang)=>{ const w=await getW(lang||"ara"); await w.setParameters({tessedit_pageseg_mode:String(psm||6)}); const {data}=await w.recognize(canvas);
+    let words=data.words; if(!words&&data.blocks){ words=[]; data.blocks.forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>(l.words||[]).forEach(x=>words.push(x))))); }
+    return {text:data.text||"", words:(words||[]).map(x=>({text:x.text, x0:x.bbox.x0, y0:x.bbox.y0, x1:x.bbox.x1, y1:x.bbox.y1}))}; };
   try{
-    await loadTess(); stage="تجهيز الصورة"; draw(); const can=await prepScan(file);
-    stage="تحميل لغة العربي"; draw();
-    w=await Tesseract.createWorker(["ara","eng"],1,{logger:m=>{ if(m.status==="recognizing text"){ stage="قراءة الكتابة"; pct=toAr(Math.round(m.progress*100))+"٪"; } }});
-    await w.setParameters({preserve_interword_spaces:"1", tessedit_pageseg_mode:"4"});
-    stage="قراءة الكتابة"; draw(); const {data}=await w.recognize(can);
-    let out=null; try{ out=parseCols(data); }catch(x){} if(!out||!out.rows.length) out=parseOCR(data.text||"");
+    await loadTess(); stage="فتح الصورة"; draw();
+    const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error("img")); i.src=URL.createObjectURL(file); });
+    await getW("ara");
+    let out=await SC.scan(img, ocr, x=>{ stage=x; pct=""; draw(); });
+    if(!out||!out.rows.length){ // ما لگه جدول بخطوط: قراءة الورقة كاملة
+      stage="قراءة الورقة كاملة"; draw(); const can=await prepScan(file); const w=await getW("ara+eng"); await w.setParameters({tessedit_pageseg_mode:"4"});
+      const {data}=await w.recognize(can); out=parseOCR(data.text||""); }
     if(!out.rows.length && !out.title) throw new Error("empty");
     if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
-    cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? out.rows : cur.rows.concat(out.rows);
+    const clean=out.rows.map(r=>({d:r.d,q:r.q,u:r.u,p:r.p,store:!!r.store}));
+    cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? clean : cur.rows.concat(clean);
     if(!cur.rows.length) cur.rows.push(blankRow());
+    const bad=out.rows.map((r,i)=>r.chk===false?toAr(i+1):null).filter(Boolean);
     dirty=true; clearInterval(tk); renderEdit();
-    toast(`السكنر قرأ ${toAr(out.rows.length)} فقرة. راجع كل فقرة مع الورقة (السكنر أضعف من Gemini بالكتابة اليدوية).`,7000);
-  }catch(e){ clearInterval(tk); const s2=$("#phs"); if(s2) s2.textContent = e&&e.message==="load" ? "تعذّر تحميل السكنر. تأكد من الإنترنت (يحتاجه أول مرة فقط)." : "السكنر لم يستطع قراءة الورقة. صوّرها من الأعلى بإضاءة جيدة وبدون ظل، أو اكتب الفقرات يدوياً."; }
-  finally{ clearInterval(tk); if(w) w.terminate().catch(()=>{}); }
+    toast(`قرأ السكنر ${toAr(out.rows.length)} فقرة.${bad.length?` تأكد من أرقام الفقرة ${bad.join("، ")} (الحساب ما تطابق).`:""} راجعها مع الورقة قبل الحفظ.`,8000);
+  }catch(e){ clearInterval(tk); const s2=$("#phs"); if(s2) s2.textContent = e&&e.message==="load" ? "تعذّر تحميل السكنر. تأكد من الإنترنت (يحتاجه أول مرة فقط)." : "السكنر لم يستطع قراءة الورقة. صوّر الجدول كاملاً من الأعلى بإضاءة جيدة وبدون ظل، أو اكتب الفقرات يدوياً."; }
+  finally{ clearInterval(tk); for(const k in workers) workers[k].terminate().catch(()=>{}); }
 }
 // داخل الكشف: صفحة أو أكثر للكشف نفسه (تُضاف الفقرات)
 async function readPhoto(files){
