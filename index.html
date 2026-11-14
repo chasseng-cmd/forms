@@ -12,6 +12,12 @@
 <title>استمارات فروع ماء النجف</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
 <script src="https://js.sentry-cdn.com/7972c722a47300e78a759102970749e6.min.js" crossorigin="anonymous"></script>
+<script>
+/* اختبار Sentry: افتح الرابط مع ?sentry-test لإرسال خطأ تجريبي */
+if (location.search.indexOf('sentry-test') !== -1) {
+  setTimeout(function(){ throw new Error('خطأ تجريبي - اختبار Sentry لتطبيق الاستمارات'); }, 3000);
+}
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
