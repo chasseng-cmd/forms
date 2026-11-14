@@ -761,7 +761,7 @@ function printView(jobs,title,closeModal,fresh){
   let pv=document.getElementById("pv"); if(pv) pv.remove();
   pv=document.createElement("div"); pv.id="pv";
   pv.innerHTML=`<div class="pvbar"><button class="btn" id="pvp" ${fresh?"":"disabled"}>${fresh?"🖨️ طباعة":"⏳ تجهيز…"}</button><button class="btn sec" id="pvx">✖ رجوع</button>
-    <div class="pvh">اضغط «طباعة» مرة وحدة وانتظر ثواني حتى تطلع نافذة الطباعة، ثم اختر الطابعة وA4. لحفظ PDF أو إرساله: اضغط «طباعة» ثم زر المشاركة ⬆️ أعلى نافذة الطباعة.</div></div><div class="pvwrap"><div class="pvpages"></div></div>`;
+    <div class="pvh"><b>إصدار ${APP_VER}</b> — اضغط «طباعة» مرة وحدة وانتظر ثواني حتى تطلع نافذة الطباعة، ثم اختر الطابعة وA4. لحفظ PDF أو إرساله: اضغط «طباعة» ثم زر المشاركة ⬆️ أعلى نافذة الطباعة.</div></div><div class="pvwrap"><div class="pvpages"></div></div>`;
   document.body.appendChild(pv); document.body.classList.add("pvmode");
   const host=pv.querySelector(".pvpages"), sheets=buildSheets(jobs,host);
   sheets.forEach(sh=>{ const w=document.createElement("div"); w.className="pgw"; if(+(sh.dataset.pages||1)>1){ sh.classList.add("tall"); w.classList.add("tall"); } sh.parentNode.insertBefore(w,sh); w.appendChild(sh); });
