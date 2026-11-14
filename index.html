@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٢";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٣";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1737,10 +1737,10 @@ async function save(status,msg){
 $("#phf").onchange=()=>{ const f=$("#phf"), files=[...f.files]; f.value=""; if(files.length) readPhoto(files); };
 async function shrink(file){
   const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file);});
-  const m=2200, s=Math.min(1, m/Math.max(img.width,img.height)), c=document.createElement("canvas");
+  const m=1800, s=Math.min(1, m/Math.max(img.width,img.height)), c=document.createElement("canvas");
   c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); const g=c.getContext("2d");
   g.filter="contrast(1.25) brightness(1.05)"; g.drawImage(img,0,0,c.width,c.height); // يوضّح كتابة القلم الجاف
-  return c.toDataURL("image/jpeg",0.9).split(",")[1];
+  return c.toDataURL("image/jpeg",0.8).split(",")[1];
 }
 const PHOTO_PROMPT=`هذه صورة "كشف" صيانة من فرع ماء القادسية (العراق). استخرج محتواه بدقة.
 أرجع JSON فقط بهذا الشكل:
@@ -1766,26 +1766,26 @@ async function prepFile(file){
 // مهلة كلية ٩٠ ثانية بدل الانتظار المفتوح
 async function gemini(file, c, onStage){
   if(onStage) onStage("تجهيز الملف");
-  const part=await prepFile(file), models=[...new Set([c.geminiModel||"gemini-flash-latest","gemini-flash-latest","gemini-2.5-flash","gemini-flash-lite-latest"])];
-  const end=Date.now()+90000; let last={status:-3};
+  const part=await prepFile(file), models=[...new Set([c.geminiModel||"gemini-2.5-flash","gemini-2.5-flash","gemini-flash-latest","gemini-flash-lite-latest"])];
+  const end=Date.now()+150000; let last={status:-3};
   for(const model of models) for(let t=0;t<2;t++){
     const left=end-Date.now(); if(left<5000) throw last;
     if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال إلى Gemini وانتظار الرد");
-    try{ return await gemini1(part,model,c,Math.min(45000,left)); }
+    try{ return await gemini1(part,model,c,Math.min(90000,left)); }
     catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===404) break;
       await new Promise(r=>setTimeout(r,e&&e.status===429?6000:1500)); }
   }
   throw last;
 }
-async function gemini1(part, model, c, ms){
+async function gemini1(part, model, c, ms, plain){
   const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),ms||45000);
   // المفتاح بالهيدر (يشتغل للمفاتيح الجديدة AQ. والقديمة AIza)
   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},
     signal:ac.signal,
-    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:part.mime,data:part.data}}]}],generationConfig:{responseMimeType:"application/json",temperature:0,maxOutputTokens:8192}})}).catch(e=>{ throw {status:e&&e.name==="AbortError"?-4:-5}; }).finally(()=>clearTimeout(tm));
+    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:part.mime,data:part.data}}]}],generationConfig:Object.assign({responseMimeType:"application/json",temperature:0,maxOutputTokens:8192}, plain?{}:{thinkingConfig:{thinkingBudget:0}})})}).catch(e=>{ throw {status:e&&e.name==="AbortError"?-4:-5}; }).finally(()=>clearTimeout(tm));
   const j=await res.json().catch(()=>({}));
-  if(!res.ok) throw {status:res.status, msg:(j.error&&j.error.message)||""};
+  if(!res.ok){ const msg=(j.error&&j.error.message)||""; if(res.status===400 && !plain && /think/i.test(msg)) return gemini1(part,model,c,ms,true); throw {status:res.status, msg}; }
   const txt=(((j.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text||"").join("")||"";
   let out; try{ out=JSON.parse(txt.replace(/^```json|```$/g,"").trim()); }catch(e){ const a=txt.indexOf("{"), b=txt.lastIndexOf("}"); out=JSON.parse(txt.slice(a,b+1)); }
   const rows=Array.isArray(out.rows)?out.rows.map(r=>({o:String(r.o||"").trim(),d:String(r.d||"").replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g,"$1").trim(),q:toEn(r.q||""),u:String(r.u||"عدد").replace(/جمل[ةه]/g,"").trim()||"عدد",p:r.store?"":toEn(r.p||"").replace(/[^\d.]/g,""),store:!!r.store})).filter(r=>r.d):[];
@@ -1797,7 +1797,7 @@ const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slic
     : st===400||st===401||st===403?"مفتاح Gemini غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
     : st===404?"نموذج Gemini غير موجود. امسح خانة النموذج في الإعدادات."+m
     : st===-2?"الملف كبير جداً (أكثر من ١٨ ميغا). صوّره بدقة أقل."
-    : st===-3||st===-4?"انتهت المهلة (٩٠ ثانية) بدون رد من Gemini. تأكد من الإنترنت وحاول مرة أخرى."
+    : st===-3||st===-4?"انتهت المهلة (دقيقتان ونصف) بدون رد من Gemini. تأكد من الإنترنت وحاول مرة أخرى."
     : st===-5?"تعذّر الاتصال بـ Gemini. تأكد من الإنترنت أو جرّب الواي فاي."
     : "تعذّرت قراءة الملف. صوّره بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً."+m; };
 async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح Gemini. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح Gemini.",5000); return null; } return c; }
@@ -1808,7 +1808,7 @@ async function readPhoto(files){
   try{
     for(let i=0;i<files.length;i++){
       const t0=Date.now(), lab=files.length>1?`الصفحة ${toAr(i+1)} من ${toAr(files.length)}`:"الكشف";
-      let stage="تجهيز الملف"; const draw=()=>{ const s3=$("#phs"); if(s3) s3.innerHTML=`<span class="spin"></span> ${lab}: ${stage}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية (الحد ٩٠)`; }; draw();
+      let stage="تجهيز الملف"; const draw=()=>{ const s3=$("#phs"); if(s3) s3.innerHTML=`<span class="spin"></span> ${lab}: ${stage}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; }; draw();
       const tk=setInterval(draw,1000);
       let out; try{ out=await gemini(files[i],c,x=>{ stage=x; draw(); }); } finally{ clearInterval(tk); }
       if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
