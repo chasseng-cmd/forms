@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٧";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٨";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1764,16 +1764,18 @@ async function prepFile(file){
   try{ return {mime:"image/jpeg", data:await Promise.race([shrink(file), new Promise((_,j)=>setTimeout(()=>j(new Error("slow")),20000))])}; }
   catch(e){ if(file.size>18e6) throw {status:-2}; return {mime:file.type||"image/jpeg", data:await b64file(file)}; }
 }
+// إذا النموذج ملغي، رسالة الخطأ تذكر اسم النموذج البديل — نأخذه منها
+const sugModel = m => { const x=String(m||"").match(/use\s+(?:models\/)?(gemini-[\w.\-]+)/i); return x?x[1].replace(/\.$/,""):""; };
 // مهلة كلية ٩٠ ثانية بدل الانتظار المفتوح
 async function gemini(file, c, onStage){
   if(onStage) onStage("تجهيز الملف");
-  const part=await prepFile(file), models=[...new Set([c.geminiModel||"gemini-2.5-flash","gemini-2.5-flash","gemini-flash-latest","gemini-flash-lite-latest"])];
+  const part=await prepFile(file), models=[...new Set([c.geminiModel||"gemini-3.8-flash","gemini-3.8-flash","gemini-flash-latest","gemini-flash-lite-latest","gemini-2.5-flash"])];
   const end=Date.now()+150000; let last={status:-3};
-  for(const model of models) for(let t=0;t<2;t++){
+  for(let mi=0;mi<models.length;mi++) for(let t=0;t<2;t++){ const model=models[mi];
     const left=end-Date.now(); if(left<5000) throw last;
     if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال الصورة وانتظار القراءة");
     try{ return await gemini1(part,model,c,Math.min(90000,left)); }
-    catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===404) break;
+    catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===404){ const sg=sugModel(e.msg); if(sg&&!models.includes(sg)) models.splice(mi+1,0,sg); break; }
       await new Promise(r=>setTimeout(r,e&&e.status===429?6000:1500)); }
   }
   throw last;
@@ -1806,13 +1808,18 @@ async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), n
 async function testGemini(){
   const st=$("#phs"); const c=await getKey(); if(!c) return; const t0=Date.now();
   const tk=setInterval(()=>{ if(st) st.innerHTML=`<span class="spin"></span> فحص الاتصال… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; },500);
-  const model=c.geminiModel||"gemini-2.5-flash", ac=new AbortController(), to=setTimeout(()=>ac.abort(),30000);
+  const list=[...new Set([c.geminiModel||"gemini-3.8-flash","gemini-3.8-flash","gemini-flash-latest"])], ac=new AbortController(), to=setTimeout(()=>ac.abort(),30000);
   let msg;
-  try{ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:{maxOutputTokens:20,thinkingConfig:{thinkingBudget:0}}})});
-    const j=await r.json().catch(()=>({})), sec=toAr(((Date.now()-t0)/1000).toFixed(1));
-    msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية). المشكلة إذن في رفع الصورة: جرّب الواي فاي أو «سكنر».`
+  try{ let r,j,model;
+    for(let i=0;i<list.length&&i<5;i++){ model=list[i];
+      const call=cfg=>fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:cfg})});
+      r=await call({maxOutputTokens:20,thinkingConfig:{thinkingBudget:0}}); j=await r.json().catch(()=>({}));
+      if(r.status===400&&/think/i.test((j.error&&j.error.message)||"")){ r=await call({maxOutputTokens:200}); j=await r.json().catch(()=>({})); }
+      if(r.status!==404) break; const sg=sugModel(j.error&&j.error.message); if(sg&&!list.includes(sg)) list.splice(i+1,0,sg); }
+    const sec=toAr(((Date.now()-t0)/1000).toFixed(1));
+    msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية). صوّر الكشف الآن.`
                : `✖ خدمة القراءة ردّت بخطأ ${toAr(r.status)} بعد ${sec} ثانية: ${String((j.error&&j.error.message)||"").slice(0,160)}`;
-  }catch(e){ msg = e&&e.name==="AbortError" ? "✖ لا يوجد رد من خدمة القراءة خلال ٣٠ ثانية. الشبكة لا توصل إلى خوادم القراءة (جرّب شبكة أخرى أو VPN)، واستعمل «سكنر بدون Gemini» الآن." : "✖ تعذّر الوصول إلى خدمة القراءة إطلاقاً ("+(e&&e.message||"")+"). جرّب شبكة أخرى، واستعمل «سكنر بدون Gemini» الآن."; }
+  }catch(e){ msg = e&&e.name==="AbortError" ? "✖ لا يوجد رد من خدمة القراءة خلال ٣٠ ثانية. جرّب شبكة أخرى، واستعمل «سكنر» الآن." : "✖ تعذّر الوصول إلى خدمة القراءة ("+(e&&e.message||"")+"). جرّب شبكة أخرى."; }
   clearTimeout(to); clearInterval(tk); if(st) st.textContent=msg;
 }
 // سكنر داخل الموبايل (Tesseract) — بدون Gemini. يقرأ الكتابة المطبوعة أفضل من اليدوية
