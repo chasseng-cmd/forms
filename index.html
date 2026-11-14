@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٢";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٣ لصق";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1335,7 +1335,7 @@ function renderEdit(){
       <button class="btn" id="topen">⚖️ فتح محضر التثمين وإدخال الأوزان والأسعار</button></div>`; }
   h+=notesHTML(k);
   if(curId) h+=`<details class="card" id="kchatd" ${chatUnread(k)?"open":""}><summary style="cursor:pointer;font-weight:800;color:var(--blue)">💬 دردشة على هذا الكشف${k.lastChat?` <span class="hint">(آخر رسالة: ${esc(k.lastChat.by)})</span>`:""}${chatUnread(k)?` <span class="badge b-ret">جديدة</span>`:""}</summary><div id="kchat"></div></details>`;
-  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph"><span class="em">📷</span> صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويملأ النطاق والفقرات. إذا كان الكشف أكثر من ورقة، فاختر صفحاته جميعاً معاً.</div><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn sec" style="flex:1" id="scn">🖨️ سكنر</button><button class="btn sec" style="flex:1" id="gtest">🔌 فحص الاتصال</button></div><input type="file" id="scf" accept="image/*" hidden>`;
+  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph"><span class="em">📷</span> صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويملأ النطاق والفقرات. إذا كان الكشف أكثر من ورقة، فاختر صفحاته جميعاً معاً.</div><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn sec" style="flex:1" id="pst">📋 لصق</button><button class="btn sec" style="flex:1" id="scn">🖨️ سكنر</button><button class="btn sec" style="flex:1" id="gtest">🔌 فحص الاتصال</button></div><input type="file" id="scf" accept="image/*" hidden>`;
   h+=`<div class="card"><div class="grid"><div><label class="f">رقم الكشف</label>${ro?`<div class="v">${esc(toAr(k.no))||"—"}</div>`:`<input class="i" id="no" inputmode="numeric" value="${esc(k.no)}">`}</div>
      <div><label class="f">رقم محضر التسعير</label>${rev&&committeeMatches(k)?`<input class="i" id="tno" inputmode="numeric" value="${esc(k.tasirNo||"")}" placeholder="تكتبه لجنة الاعتدال">`:`<div class="v">${esc(toAr(k.tasirNo))||"—"}</div>`}</div></div>
      <label class="f">نطاق الكشف (اسم العمل)</label>${ro?`<div class="v">${esc(k.title)}</div>`:`<textarea class="i ${tChanged?'changed':''}" id="title" placeholder="مثال: صيانة مضخة الدفع الأولى نوع (ebara) التابعة إلى مشروع ماء القادسية المركزي">${esc(k.title)}</textarea>${tChanged?`<div class="chg">${esc(k.orig.title)}</div>`:""}`}
@@ -1696,7 +1696,7 @@ function bindEdit(){
     const t=g("tno2"), o=g("ono"), d=g("odt"); if(t!==undefined) cur.tasirNo=t; if(o!==undefined) cur.orderNo=o; if(d!==undefined) cur.orderDate=d; await save(null,"حُفظت الأرقام ✓"); });
   on("reopen",async()=>{ if(await ask("هل تريد إعادة فتحه للجنة؟","فتح")){ snapOrig(); cur.notes=(cur.notes||[]).concat([{t:"",act:"forward",label:"أعاد فتحه للجنة",by:myName(),role:profile.role,at:Date.now()}]); await save("review","انفتح للجنة"); } });
   on("del",async()=>{ if(!(await ask("هل تريد حذف هذا الكشف نهائياً؟","حذف",true))) return; try{ await store.remove(curId); dirty=false; toast("انحذف"); renderList(); }catch(e){ toast("لم يُحذف، حاول مرة أخرى."); } });
-  on("ph",()=>$("#phf").click()); on("scn",()=>$("#scf").click()); on("gtest",testGemini);
+  on("ph",()=>$("#phf").click()); on("pst",pasteKashf); on("scn",()=>$("#scf").click()); on("gtest",testGemini);
   { const sf=$("#scf"); if(sf) sf.onchange=()=>{ const f=sf.files[0]; sf.value=""; if(f) scanOCR(f); }; }
   bindForms(cur, cur.no?"_"+toEn(cur.no).replace(/[^0-9A-Za-z-]/g,""):"");
 }
@@ -1819,6 +1819,33 @@ const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slic
     : "تعذّرت قراءة الملف. صوّره بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً."+m; };
 async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح القراءة الذكية. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح القراءة الذكية.",5000); return null; } return c; }
 // فحص سريع: هل يصل الموبايل إلى Gemini؟ (طلب نصي صغير جداً)
+// لصق: صورة منسوخة (من الصور أو الواتساب) ← تُقرأ مثل التصوير؛ نص منسوخ ← يتوزع على الجدول
+function pasteText(t){
+  const out=parseOCR(String(t||""));
+  if(!out.rows.length && !out.title){ toast("ما لگيت فقرات بالنص المنسوخ."); return; }
+  if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
+  cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? out.rows : cur.rows.concat(out.rows);
+  dirty=true; renderEdit(); toast(`انلصقت ${toAr(out.rows.length)} فقرة. راجعها قبل الحفظ.`,5000);
+}
+function pasteFiles(files){ files=[...files].filter(f=>/^image\/|pdf/.test(f.type)); if(!files.length) return false; readPhoto(files.map((f,i)=>f.name?f:new File([f],"paste"+i+".png",{type:f.type}))); return true; }
+async function pasteKashf(){
+  // ١) قراءة الحافظة مباشرة
+  try{ if(navigator.clipboard&&navigator.clipboard.read){ const items=await navigator.clipboard.read(); const imgs=[]; let txt="";
+      for(const it of items){ const ty=it.types.find(t=>t.startsWith("image/")); if(ty) imgs.push(new File([await it.getType(ty)],"paste.png",{type:ty}));
+        else if(it.types.includes("text/plain")) txt+=await (await it.getType("text/plain")).text(); }
+      if(imgs.length){ pasteFiles(imgs); return; } if(txt.trim()){ pasteText(txt); return; } } }catch(e){}
+  // ٢) مربع لصق (ضغط مطوّل ← لصق)
+  const box=document.createElement("div");
+  box.innerHTML=`<div style="position:fixed;inset:0;background:#0007;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px"><div style="background:#fff;border-radius:16px;padding:18px;max-width:420px;width:100%;text-align:center">
+    <b>انسخ صورة الكشف (أو نصه) ثم اضغط مطوّلاً داخل المربع واختر «لصق»</b>
+    <div id="pbox" contenteditable="true" style="margin:14px 0;min-height:120px;border:2px dashed #2a5d84;border-radius:12px;padding:10px;font-size:16px"></div>
+    <button class="btn sec" id="pcl">إلغاء</button></div></div>`;
+  document.body.appendChild(box); const pb=box.querySelector("#pbox"), close=()=>box.remove(); box.querySelector("#pcl").onclick=close; setTimeout(()=>pb.focus(),50);
+  pb.addEventListener("paste",async ev=>{ ev.preventDefault(); const cd=ev.clipboardData; let files=[...(cd.files||[])];
+    if(!files.length) for(const it of (cd.items||[])) if(it.kind==="file"){ const f=it.getAsFile(); if(f) files.push(f); }
+    const txt=cd.getData("text/plain"); close();
+    if(files.length && pasteFiles(files)) return; if(txt.trim()) pasteText(txt); else toast("الحافظة فارغة. انسخ صورة الكشف أولاً."); });
+}
 // يجلب قائمة النماذج المتاحة للمفتاح، يجرّبها كلها معاً بطلب صغير، ويحفظ أسرع نموذج يعمل ليُستعمل في التصوير
 const GM_KEY="gm_best"; const bestModel=()=>{ try{ return localStorage.getItem(GM_KEY)||""; }catch(e){ return ""; } };
 async function testGemini(){
