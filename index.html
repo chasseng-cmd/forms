@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٣";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٤ سكنر";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1335,7 +1335,7 @@ function renderEdit(){
       <button class="btn" id="topen">⚖️ فتح محضر التثمين وإدخال الأوزان والأسعار</button></div>`; }
   h+=notesHTML(k);
   if(curId) h+=`<details class="card" id="kchatd" ${chatUnread(k)?"open":""}><summary style="cursor:pointer;font-weight:800;color:var(--blue)">💬 دردشة على هذا الكشف${k.lastChat?` <span class="hint">(آخر رسالة: ${esc(k.lastChat.by)})</span>`:""}${chatUnread(k)?` <span class="badge b-ret">جديدة</span>`:""}</summary><div id="kchat"></div></details>`;
-  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph"><span class="em">📷</span> صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويملأ النطاق والفقرات. إذا كان الكشف أكثر من ورقة، فاختر صفحاته جميعاً معاً.</div>`;
+  if(st==="draft"&&canEdit) h+=`<button class="photo" id="ph"><span class="em">📷</span> صوّر الكشف</button><div class="hint" id="phs" style="text-align:center;margin-bottom:10px">يقرأ الورقة ويملأ النطاق والفقرات. إذا كان الكشف أكثر من ورقة، فاختر صفحاته جميعاً معاً.</div><div style="display:flex;gap:8px;margin:0 0 12px"><button class="btn sec" style="flex:1" id="scn">🖨️ سكنر بدون Gemini</button><button class="btn sec" style="flex:1" id="gtest">🔌 فحص الاتصال</button></div><input type="file" id="scf" accept="image/*" hidden>`;
   h+=`<div class="card"><div class="grid"><div><label class="f">رقم الكشف</label>${ro?`<div class="v">${esc(toAr(k.no))||"—"}</div>`:`<input class="i" id="no" inputmode="numeric" value="${esc(k.no)}">`}</div>
      <div><label class="f">رقم محضر التسعير</label>${rev&&committeeMatches(k)?`<input class="i" id="tno" inputmode="numeric" value="${esc(k.tasirNo||"")}" placeholder="تكتبه لجنة الاعتدال">`:`<div class="v">${esc(toAr(k.tasirNo))||"—"}</div>`}</div></div>
      <label class="f">نطاق الكشف (اسم العمل)</label>${ro?`<div class="v">${esc(k.title)}</div>`:`<textarea class="i ${tChanged?'changed':''}" id="title" placeholder="مثال: صيانة مضخة الدفع الأولى نوع (ebara) التابعة إلى مشروع ماء القادسية المركزي">${esc(k.title)}</textarea>${tChanged?`<div class="chg">${esc(k.orig.title)}</div>`:""}`}
@@ -1696,7 +1696,8 @@ function bindEdit(){
     const t=g("tno2"), o=g("ono"), d=g("odt"); if(t!==undefined) cur.tasirNo=t; if(o!==undefined) cur.orderNo=o; if(d!==undefined) cur.orderDate=d; await save(null,"حُفظت الأرقام ✓"); });
   on("reopen",async()=>{ if(await ask("هل تريد إعادة فتحه للجنة؟","فتح")){ snapOrig(); cur.notes=(cur.notes||[]).concat([{t:"",act:"forward",label:"أعاد فتحه للجنة",by:myName(),role:profile.role,at:Date.now()}]); await save("review","انفتح للجنة"); } });
   on("del",async()=>{ if(!(await ask("هل تريد حذف هذا الكشف نهائياً؟","حذف",true))) return; try{ await store.remove(curId); dirty=false; toast("انحذف"); renderList(); }catch(e){ toast("لم يُحذف، حاول مرة أخرى."); } });
-  on("ph",()=>$("#phf").click());
+  on("ph",()=>$("#phf").click()); on("scn",()=>$("#scf").click()); on("gtest",testGemini);
+  { const sf=$("#scf"); if(sf) sf.onchange=()=>{ const f=sf.files[0]; sf.value=""; if(f) scanOCR(f); }; }
   bindForms(cur, cur.no?"_"+toEn(cur.no).replace(/[^0-9A-Za-z-]/g,""):"");
 }
 function snapOrig(){ cur.rows.forEach((r,i)=>r._o=i); cur.orig={title:cur.title,rows:clone(cur.rows).map(r=>{delete r._o;return r;})}; }
@@ -1801,6 +1802,79 @@ const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slic
     : st===-5?"تعذّر الاتصال بـ Gemini. تأكد من الإنترنت أو جرّب الواي فاي."
     : "تعذّرت قراءة الملف. صوّره بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً."+m; };
 async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح Gemini. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح Gemini.",5000); return null; } return c; }
+// فحص سريع: هل يصل الموبايل إلى Gemini؟ (طلب نصي صغير جداً)
+async function testGemini(){
+  const st=$("#phs"); const c=await getKey(); if(!c) return; const t0=Date.now();
+  const tk=setInterval(()=>{ if(st) st.innerHTML=`<span class="spin"></span> فحص الاتصال… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; },500);
+  const model=c.geminiModel||"gemini-2.5-flash", ac=new AbortController(), to=setTimeout(()=>ac.abort(),30000);
+  let msg;
+  try{ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},body:JSON.stringify({contents:[{parts:[{text:"قل: تم"}]}],generationConfig:{maxOutputTokens:20,thinkingConfig:{thinkingBudget:0}}})});
+    const j=await r.json().catch(()=>({})), sec=toAr(((Date.now()-t0)/1000).toFixed(1));
+    msg = r.ok ? `✔ الاتصال يعمل (${sec} ثانية، النموذج ${model}). المشكلة إذن في رفع الصورة: جرّب الواي فاي أو «سكنر بدون Gemini».`
+               : `✖ Gemini ردّ بخطأ ${toAr(r.status)} بعد ${sec} ثانية: ${String((j.error&&j.error.message)||"").slice(0,160)}`;
+  }catch(e){ msg = e&&e.name==="AbortError" ? "✖ لا يوجد رد من Gemini خلال ٣٠ ثانية. الشبكة لا توصل إلى خوادم Gemini (جرّب شبكة أخرى أو VPN)، واستعمل «سكنر بدون Gemini» الآن." : "✖ تعذّر الوصول إلى Gemini إطلاقاً ("+(e&&e.message||"")+"). جرّب شبكة أخرى، واستعمل «سكنر بدون Gemini» الآن."; }
+  clearTimeout(to); clearInterval(tk); if(st) st.textContent=msg;
+}
+// سكنر داخل الموبايل (Tesseract) — بدون Gemini. يقرأ الكتابة المطبوعة أفضل من اليدوية
+let tessP=null;
+const loadTess=()=> tessP||(tessP=new Promise((res,rej)=>{ if(window.Tesseract) return res(); const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"; sc.onload=res; sc.onerror=()=>{ tessP=null; rej(new Error("load")); }; document.head.appendChild(sc); }));
+async function prepScan(file){
+  const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file);});
+  const m=2400, s=Math.min(1.6, m/Math.max(img.width,img.height)), c=document.createElement("canvas");
+  c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); const g=c.getContext("2d");
+  g.filter="grayscale(1) contrast(1.6) brightness(1.08)"; g.drawImage(img,0,0,c.width,c.height); return c;
+}
+const UNITS=/(عدد|متر\s*مربع|متر\s*مكعب|متر|م٢|م٣|م2|م3|كغم|كيلو\s*غرام|كيلوغرام|كيلواط|لتر|طن|قطعة|قطعه|زوج|لفة|لفه|كيس|علبة|علبه|برميل|سيت|طقم|ساعة|ساعه|يوم)/;
+function parseOCR(text){
+  const lines=String(text).split(/\n+/).map(x=>toEn(x).replace(/[|_\[\]{}<>]/g," ").replace(/\s+/g," ").trim()).filter(Boolean);
+  let title="", rows=[];
+  for(const L of lines){
+    const tm=L.match(/نطاق\s*الكشف\s*[\/:\-]?\s*(.+)/); if(tm){ title=tm[1].trim(); continue; }
+    if(/تفاصيل|الكمية|السعر الكلي|المجموع|لاغيرها|محافظة|مديرية|مركز تشغيل|المهندس|الفني/.test(L)) continue;
+    const store=/اخراج\s*مخزني|إخراج\s*مخزني/.test(L);
+    let t=L.replace(/اخراج\s*مخزني|إخراج\s*مخزني/g," ");
+    const nums=[...t.matchAll(/\d+(?:[.,]\d+)?/g)].map(x=>({v:+x[0].replace(",","."),s:x[0],i:x.index}));
+    const ar=(t.match(/[\u0600-\u06FF]/g)||[]).length; if(ar<3) continue;
+    let ns=nums.slice(); if(ns.length && ns[0].i<4 && ns[0].v<100 && Number.isInteger(ns[0].v) && ns.length>1) ns.shift(); // رقم التسلسل
+    // الأرقام الملاصقة لكلمات (مثل ٦ انج، ٥٥ كيلواط) تبقى داخل التفاصيل؛ نأخذ أرقام الأعمدة من نهاية السطر
+    let q="",p="";
+    const big=ns.filter(n=>n.v>=250);
+    if(big.length>=2){ p=big[big.length-2].s; const before=ns.filter(n=>n.i<big[big.length-2].i); q=before.length?before[before.length-1].s:"1";
+      if(+p && +big[big.length-1].v && Math.abs(+q*+p-big[big.length-1].v)>1 && big[big.length-1].v%+p===0) q=String(big[big.length-1].v/+p); }
+    else if(big.length===1){ p=big[0].s; const before=ns.filter(n=>n.i<big[0].i); q=before.length?before[before.length-1].s:"1"; }
+    else if(store && ns.length){ q=ns[ns.length-1].s; }
+    else if(!ns.length && rows.length){ rows[rows.length-1].d+=" "+t.trim(); continue; } // تكملة سطر التفاصيل
+    // التفاصيل = النص قبل عمود الكمية
+    const pi = p ? (big.length>=2? big[big.length-2] : big[0]).i : 1e9;
+    const cut = q && ns.filter(n=>n.s===q && n.i<pi).pop();
+    let d=(cut? t.slice(0,cut.i) : t.replace(/\d+(?:[.,]\d+)?\s*$/,"")).replace(/^\s*\d{1,2}[\s\-.]+/,"");
+    const um=(cut? t.slice(cut.i) : t).match(UNITS); let u=um?um[1].replace(/\s+/g," "):"عدد"; if(u==="قطعه") u="قطعة";
+    d=d.replace(new RegExp("\\s*"+(um?um[1]:"@@")+"\\s*$"),"").replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g,"$1").replace(/\s+/g," ").trim();
+    if(d.length<3) continue;
+    rows.push({d, q:q?String(+q):"", u, p:store?"":(p?String(+p):""), store});
+  }
+  return {title, rows};
+}
+async function scanOCR(file){
+  const st=$("#phs"), t0=Date.now(); let stage="تحميل السكنر (أول مرة فقط ~٣ ميغا)", pct="";
+  const draw=()=>{ if(st) st.innerHTML=`<span class="spin"></span> ${stage}${pct?` ${pct}`:""}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; }; draw(); const tk=setInterval(draw,1000);
+  let w;
+  try{
+    await loadTess(); stage="تجهيز الصورة"; draw(); const can=await prepScan(file);
+    stage="تحميل لغة العربي"; draw();
+    w=await Tesseract.createWorker(["ara","eng"],1,{logger:m=>{ if(m.status==="recognizing text"){ stage="قراءة الكتابة"; pct=toAr(Math.round(m.progress*100))+"٪"; } }});
+    await w.setParameters({preserve_interword_spaces:"1", tessedit_pageseg_mode:"6"});
+    stage="قراءة الكتابة"; draw(); const {data}=await w.recognize(can);
+    const out=parseOCR(data.text||"");
+    if(!out.rows.length && !out.title) throw new Error("empty");
+    if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
+    cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? out.rows : cur.rows.concat(out.rows);
+    if(!cur.rows.length) cur.rows.push(blankRow());
+    dirty=true; clearInterval(tk); renderEdit();
+    toast(`السكنر قرأ ${toAr(out.rows.length)} فقرة. راجع كل فقرة مع الورقة (السكنر أضعف من Gemini بالكتابة اليدوية).`,7000);
+  }catch(e){ clearInterval(tk); const s2=$("#phs"); if(s2) s2.textContent = e&&e.message==="load" ? "تعذّر تحميل السكنر. تأكد من الإنترنت (يحتاجه أول مرة فقط)." : "السكنر لم يستطع قراءة الورقة. صوّرها من الأعلى بإضاءة جيدة وبدون ظل، أو اكتب الفقرات يدوياً."; }
+  finally{ clearInterval(tk); if(w) w.terminate().catch(()=>{}); }
+}
 // داخل الكشف: صفحة أو أكثر للكشف نفسه (تُضاف الفقرات)
 async function readPhoto(files){
   const st=$("#phs"), b=$("#ph"); const c=await getKey(); if(!c) return;
