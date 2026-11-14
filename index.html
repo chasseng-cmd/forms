@@ -106,6 +106,11 @@ details.st summary{font-size:13px;color:var(--blue);cursor:pointer}
 .wrap{transform-origin:top right}
 .sheet{width:794px;height:1123px;background:#fff;color:#000;padding:48px 52px 40px;font-family:"Times New Roman",Times,serif;font-weight:700;direction:rtl;overflow:hidden;--k:1}
 .sheet .c{font-size:calc(var(--k)*13pt);line-height:1.45}
+.sheet.sm{break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+.sheet.sm:last-child{break-after:auto;page-break-after:auto}
+.sheet.sm table{max-width:100%!important}
+.sheet.sm table.t th,.sheet.sm table.t td{padding:4px 5px}
+.sheet.sm img{max-width:100%}
 .sheet .scope{text-align:justify;margin:22px 0 18px;font-size:calc(var(--k)*16pt)}
 .sheet table.t{width:100%;border-collapse:collapse}
 .sheet table.t th,.sheet table.t td{border:1px solid #000;padding:5px 6px;text-align:center;vertical-align:middle}
@@ -213,21 +218,18 @@ body.pvmode #pv{display:block}
 #pv .pvbar .btn{width:auto;margin:0;flex:1;min-width:110px}
 #pv .pvbar .pvh{width:100%;font-size:14px;line-height:1.6}
 #pv .pvwrap{direction:ltr;overflow:hidden;padding:10px 0}
-#pv .pvpages{width:794px;transform-origin:top left}
+#pv .pvpages{width:683px;transform-origin:top left}
 #pv .pvpages .sheet{margin:0 0 12px}
 @media screen{ #pv .pgw{display:block} }
 #pv .sheet{box-shadow:0 2px 8px rgba(0,0,0,.25)}
 @media print{
-  @page{size:A4 portrait;margin:8mm}
+  @page{size:A4 portrait;margin:6mm}
   html,body{background:#fff!important;margin:0!important;padding:0!important}
   #pv .pvbar{display:none!important}
   #pv .pvwrap{padding:0!important;height:auto!important;overflow:visible!important}
-  #pv .pvpages{transform:none!important;margin:0!important;width:auto!important}
-  #pv .pgw{width:699px;height:984px;overflow:hidden;margin:0 auto;position:relative;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
-  #pv .pgw:last-child{page-break-after:auto;break-after:auto}
-  #pv .pgw>.sheet{position:absolute;top:0;left:0;width:794px!important;height:1118px!important;overflow:hidden!important;margin:0!important;box-shadow:none!important;transform:scale(.88);transform-origin:top left}
-  #pv .pgw.tall{width:auto;height:auto;overflow:visible;position:static}
-  #pv .pgw.tall>.sheet{position:static;transform:none;height:auto!important;overflow:visible!important}
+  #pv .pvpages{transform:none!important;margin:0 auto!important;width:683px!important}
+  #pv .sheet{box-shadow:none!important;margin:0 auto!important;overflow:hidden!important}
+  #pv .sheet.tall{overflow:visible!important}
 }
 </style>
 </head>
@@ -720,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٢";
+const APP_VER = "١٤/١١ — طباعة ١٣";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -763,10 +765,11 @@ function printView(jobs,title,closeModal,fresh){
   pv.innerHTML=`<div class="pvbar"><button class="btn" id="pvp" ${fresh?"":"disabled"}>${fresh?"🖨️ طباعة":"⏳ تجهيز…"}</button><button class="btn sec" id="pvx">✖ رجوع</button>
     <div class="pvh"><b>إصدار ${APP_VER}</b> — اضغط «طباعة» مرة وحدة وانتظر ثواني حتى تطلع نافذة الطباعة، ثم اختر الطابعة وA4. لحفظ PDF أو إرساله: اضغط «طباعة» ثم زر المشاركة ⬆️ أعلى نافذة الطباعة.</div></div><div class="pvwrap"><div class="pvpages"></div></div>`;
   document.body.appendChild(pv); document.body.classList.add("pvmode");
-  const host=pv.querySelector(".pvpages"), sheets=buildSheets(jobs,host);
-  sheets.forEach(sh=>{ const w=document.createElement("div"); w.className="pgw"; if(+(sh.dataset.pages||1)>1){ sh.classList.add("tall"); w.classList.add("tall"); } sh.parentNode.insertBefore(w,sh); w.appendChild(sh); });
+  const host=pv.querySelector(".pvpages"), sheets=buildSheets(jobs,host,PS);
+  sheets.forEach(sh=>{ if(+(sh.dataset.pages||1)>1) sh.classList.add("tall"); });
   const wrap=pv.querySelector(".pvwrap");
-  const fit=()=>{ const vw=document.documentElement.clientWidth, z=Math.min(1,(vw-12)/794); host.style.transform=`scale(${z})`; host.style.marginLeft=Math.max(0,(vw-794*z)/2)+"px"; wrap.style.height=(host.scrollHeight*z+20)+"px"; }; fit(); addEventListener("resize",fit);
+  const W=Math.round(794*PS);
+  const fit=()=>{ if(matchMedia&&matchMedia("print").matches) return; const vw=document.documentElement.clientWidth, z=Math.min(1,(vw-12)/W); host.style.transform=z<1?`scale(${z})`:"none"; host.style.marginLeft=Math.max(0,(vw-W*z)/2)+"px"; wrap.style.height=(host.scrollHeight*z+20)+"px"; }; fit(); addEventListener("resize",fit);
   scrollTo(0,0);
   const base=location.href.split("#")[0];
   const pb=pv.querySelector("#pvp"), ready=()=>{ pb.disabled=false; pb.innerHTML="🖨️ طباعة"; };
@@ -1826,12 +1829,16 @@ async function makeWord(id, ks, base, btn){
 let HFORMS=null;
 function hforms(){ if(!HFORMS) HFORMS=makeForms(HtmlDocx, LOGO_B64); return HFORMS; }
 // jobs = [[formId, J, title]] -> عناصر صفحات A4 جاهزة (بعد ضبط حجم الخط)
-function buildSheets(jobs, host){
-  const sheets=[];
+// S<1: الصفحة تُبنى أصغر فعلياً (عرض وارتفاع وهوامش وخط) حتى تدخل داخل هوامش الطابعة بدون أي تصغير من المتصفح
+const PS=0.86;
+function buildSheets(jobs, host, S){
+  const sheets=[]; S=S||1;
   jobs.forEach(([f,J])=>{ hforms().build(f,J).pages().forEach(pg=>{
-    const sh=document.createElement("div"); sh.className="sheet";
-    sh.style.padding=`${pg.margin.top}px ${pg.margin.right}px ${pg.margin.bottom}px ${pg.margin.left}px`;
-    sh.innerHTML=`<div class="c">${pg.html}</div>`; host.appendChild(sh); fitSheet(sh,pg.margin); sheets.push(sh); }); });
+    const sh=document.createElement("div"); sh.className="sheet"+(S<1?" sm":"");
+    const m={top:pg.margin.top*S,right:pg.margin.right*S,bottom:pg.margin.bottom*S,left:pg.margin.left*S};
+    if(S<1){ sh.style.width=Math.round(794*S)+"px"; sh.style.height=Math.round(1123*S)+"px"; sh.dataset.s=S; }
+    sh.style.padding=`${m.top}px ${m.right}px ${m.bottom}px ${m.left}px`;
+    sh.innerHTML=`<div class="c">${pg.html}</div>`; host.appendChild(sh); fitSheet(sh,m); sheets.push(sh); }); });
   return sheets;
 }
 // أكبر خط يملأ الصفحة (لحد ١٫٣)، وإذا ما كفت حتى بـ ٠٫٧٥ تطول الورقة وتنقسم لصفحات
@@ -1840,10 +1847,10 @@ function renderKPrev(host){
     host.appendChild(inner); const sh=buildSheets(jobsFor(["kashf"],cur,false),inner)[0]; host.style.height=(1123*sc)+"px"; }catch(e){ host.textContent="تعذّر عرض الكشف"; }
 }
 function fitSheet(sh,m){
-  const c=sh.firstChild, avail=1123-m.top-m.bottom; let k=1.3;
-  for(; k>0.75; k=+(k-0.05).toFixed(2)){ sh.style.setProperty("--k",k); if(c.scrollHeight<=avail*0.97) return; }
-  sh.style.setProperty("--k",0.75);
-  if(c.scrollHeight>avail){ const n=Math.ceil(c.scrollHeight/avail); sh.style.height=(1123*n)+"px"; sh.dataset.pages=n; }
+  const S=+(sh.dataset.s||1), H=1123*S, c=sh.firstChild, avail=H-m.top-m.bottom; let k=1.3*S;
+  for(; k>0.75*S; k=+(k-0.05*S).toFixed(3)){ sh.style.setProperty("--k",k); if(c.scrollHeight<=avail*0.97) return; }
+  sh.style.setProperty("--k",0.75*S);
+  if(c.scrollHeight>avail){ const n=Math.ceil(c.scrollHeight/avail); sh.style.height=(H*n)+"px"; sh.dataset.pages=n; }
 }
 async function notBlank(u){
   const im=await new Promise(r=>{ const x=new Image(); x.onload=()=>r(x); x.onerror=()=>r(null); x.src=u; }); if(!im) return false;
