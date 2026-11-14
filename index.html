@@ -244,7 +244,7 @@ body.pvmode #pv{display:block}
   <button data-tab="forms"><span class="em">🖨️</span><span>استمارات</span></button>
   <button data-tab="chat"><span class="em">💬</span><span>الدردشة</span></button>
 </nav>
-<input type="file" id="phf" accept="image/*" multiple hidden><input type="file" id="phm" accept="image/*" multiple hidden>
+<input type="file" id="phf" accept="image/*,application/pdf" multiple hidden><input type="file" id="phm" accept="image/*,application/pdf" multiple hidden>
 
 <script>
 /* ===== مولّد الاستمارات ===== */
@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ٢";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1755,33 +1755,52 @@ const PHOTO_PROMPT=`هذه صورة "كشف" صيانة من فرع ماء ال�
 - مهم: الورقة ممكن تكون معدّلة باليد بالقلم الجاف (لجنة الاعتدال). القيمة المشطوبة اتركها، وخذ القيمة الجديدة المكتوبة باليد جنبها أو فوكها (بالسعر أو الكمية أو الوحدة أو التفاصيل).
 - الفقرة المشطوبة كلها لا تكتبها. الفقرة المضافة بخط اليد اكتبها.
 - إذا ما يمكنك تقرأ قيمة اتركها "" وأكمل باقي الفقرات ولا تتوقف.`;
-async function gemini(file, c){
-  const data=await shrink(file), models=[...new Set([c.geminiModel||"gemini-flash-latest","gemini-flash-latest","gemini-2.5-flash","gemini-flash-lite-latest"])];
-  let last;
+// يجهّز الملف: صورة ← تُصغَّر وتوضَّح، PDF ← يُرسل كما هو، صورة ما تنفتح (HEIC) ← تُرسل كما هي
+const b64file = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(f); });
+async function prepFile(file){
+  const isPdf = file.type==="application/pdf" || /\.pdf$/i.test(file.name||"");
+  if(isPdf){ if(file.size>18e6) throw {status:-2}; return {mime:"application/pdf", data:await b64file(file)}; }
+  try{ return {mime:"image/jpeg", data:await Promise.race([shrink(file), new Promise((_,j)=>setTimeout(()=>j(new Error("slow")),20000))])}; }
+  catch(e){ if(file.size>18e6) throw {status:-2}; return {mime:file.type||"image/jpeg", data:await b64file(file)}; }
+}
+// مهلة كلية ٩٠ ثانية بدل الانتظار المفتوح
+async function gemini(file, c, onStage){
+  if(onStage) onStage("تجهيز الملف");
+  const part=await prepFile(file), models=[...new Set([c.geminiModel||"gemini-flash-latest","gemini-flash-latest","gemini-2.5-flash","gemini-flash-lite-latest"])];
+  const end=Date.now()+90000; let last={status:-3};
   for(const model of models) for(let t=0;t<2;t++){
-    try{ return await gemini1(data,model,c); }
-    catch(e){ last=e; if(e&&(e.status===400||e.status===401||e.status===403)) throw e; if(e&&e.status===404) break;
-      await new Promise(r=>setTimeout(r,e&&e.status===429?8000:1500)); }
+    const left=end-Date.now(); if(left<5000) throw last;
+    if(onStage) onStage(t||model!==models[0]?"إعادة المحاولة":"إرسال إلى Gemini وانتظار الرد");
+    try{ return await gemini1(part,model,c,Math.min(45000,left)); }
+    catch(e){ last=e||{status:0}; if(e&&(e.status===400||e.status===401||e.status===403||e.status===-2)) throw e; if(e&&e.status===404) break;
+      await new Promise(r=>setTimeout(r,e&&e.status===429?6000:1500)); }
   }
   throw last;
 }
-async function gemini1(data, model, c){
-  const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),70000);
+async function gemini1(part, model, c, ms){
+  const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),ms||45000);
   // المفتاح بالهيدر (يشتغل للمفاتيح الجديدة AQ. والقديمة AIza)
   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":c.geminiKey.trim()},
     signal:ac.signal,
-    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:"image/jpeg",data}}]}],generationConfig:{responseMimeType:"application/json",temperature:0,maxOutputTokens:8192}})}).finally(()=>clearTimeout(tm));
+    body:JSON.stringify({contents:[{parts:[{text:PHOTO_PROMPT},{inline_data:{mime_type:part.mime,data:part.data}}]}],generationConfig:{responseMimeType:"application/json",temperature:0,maxOutputTokens:8192}})}).catch(e=>{ throw {status:e&&e.name==="AbortError"?-4:-5}; }).finally(()=>clearTimeout(tm));
   const j=await res.json().catch(()=>({}));
-  if(!res.ok) throw {status:res.status};
+  if(!res.ok) throw {status:res.status, msg:(j.error&&j.error.message)||""};
   const txt=(((j.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text||"").join("")||"";
   let out; try{ out=JSON.parse(txt.replace(/^```json|```$/g,"").trim()); }catch(e){ const a=txt.indexOf("{"), b=txt.lastIndexOf("}"); out=JSON.parse(txt.slice(a,b+1)); }
   const rows=Array.isArray(out.rows)?out.rows.map(r=>({o:String(r.o||"").trim(),d:String(r.d||"").replace(/(^|\s)(ال)?جمل[ةه](?=\s|$)/g,"$1").trim(),q:toEn(r.q||""),u:String(r.u||"عدد").replace(/جمل[ةه]/g,"").trim()||"عدد",p:r.store?"":toEn(r.p||"").replace(/[^\d.]/g,""),store:!!r.store})).filter(r=>r.d):[];
   if(!rows.length && !out.title) throw {status:0};
   return {no:out.no?toEn(out.no):"", title:String(out.title||"").trim(), rows};
 }
-const photoErr = e => e&&e.status===429?"انتهى الحد المجاني مؤقتاً، حاول بعد دقيقة.":e&&(e.status===400||e.status===401||e.status===403||e.status===404)?"المفتاح غير صحيح أو النموذج غير موجود. تحقق منه في الإعدادات.":"تعذّرت قراءة الصورة. صوّرها بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً.";
-async function getKey(){ try{ CFG.app=await store.getDoc("app"); }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح Gemini. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح Gemini.",5000); return null; } return c; }
+const photoErr = e => { const st=e&&e.status, m=e&&e.msg?` (${String(e.msg).slice(0,120)})`:"";
+  return st===429?"انتهى الحد المجاني لـ Gemini مؤقتاً، حاول بعد دقيقة."+m
+    : st===400||st===401||st===403?"مفتاح Gemini غير صحيح أو موقوف. تحقق منه في ⚙️ الإدارة ← الإعدادات العامة."+m
+    : st===404?"نموذج Gemini غير موجود. امسح خانة النموذج في الإعدادات."+m
+    : st===-2?"الملف كبير جداً (أكثر من ١٨ ميغا). صوّره بدقة أقل."
+    : st===-3||st===-4?"انتهت المهلة (٩٠ ثانية) بدون رد من Gemini. تأكد من الإنترنت وحاول مرة أخرى."
+    : st===-5?"تعذّر الاتصال بـ Gemini. تأكد من الإنترنت أو جرّب الواي فاي."
+    : "تعذّرت قراءة الملف. صوّره بوضوح أكبر (إضاءة جيدة والورقة كاملة) أو اكتب الفقرات يدوياً."+m; };
+async function getKey(){ try{ const d=await Promise.race([store.getDoc("app"), new Promise((_,j)=>setTimeout(()=>j(0),6000))]); if(d) CFG.app=d; }catch(e){} const c=CFG.app||{}; if(!c.geminiKey){ toast(isAdmin()?"قراءة الصور تحتاج مفتاح Gemini. ضيفه من ⚙︎ ← إعدادات عامة.":"قراءة الصور غير مفعّلة بعد. اطلب من مسؤول التطبيق إضافة مفتاح Gemini.",5000); return null; } return c; }
 // داخل الكشف: صفحة أو أكثر للكشف نفسه (تُضاف الفقرات)
 async function readPhoto(files){
   const st=$("#phs"), b=$("#ph"); const c=await getKey(); if(!c) return;
@@ -1789,8 +1808,9 @@ async function readPhoto(files){
   try{
     for(let i=0;i<files.length;i++){
       const t0=Date.now(), lab=files.length>1?`الصفحة ${toAr(i+1)} من ${toAr(files.length)}`:"الكشف";
-      const tk=setInterval(()=>{ st.innerHTML=`<span class="spin"></span> جارٍ قراءة ${lab}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; },1000);
-      let out; try{ out=await gemini(files[i],c); } finally{ clearInterval(tk); }
+      let stage="تجهيز الملف"; const draw=()=>{ const s3=$("#phs"); if(s3) s3.innerHTML=`<span class="spin"></span> ${lab}: ${stage}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية (الحد ٩٠)`; }; draw();
+      const tk=setInterval(draw,1000);
+      let out; try{ out=await gemini(files[i],c,x=>{ stage=x; draw(); }); } finally{ clearInterval(tk); }
       if(out.title && !String(cur.title||"").trim()) cur.title=out.title;
       if(out.no && !cur.no) cur.no=out.no;
       cur.rows = cur.rows.every(r=>!String(r.d).trim()) ? out.rows : cur.rows.concat(out.rows); added+=out.rows.length;
@@ -1804,13 +1824,15 @@ $("#phm").onchange=async()=>{
   const f=$("#phm"), files=[...f.files]; f.value=""; if(!files.length) return;
   const c=await getKey(); if(!c) return;
   const box=$("#batch"); let ok=0, bad=0;
+  const saveT = d => Promise.race([store.save(null,d), new Promise(r=>setTimeout(r,15000))]); let lastErr="";
   for(let i=0;i<files.length;i++){
-    if(box) box.innerHTML=`<span class="spin"></span> جارٍ قراءة الكشف ${toAr(i+1)} من ${toAr(files.length)}…`;
-    try{ const out=await gemini(files[i],c), now=Date.now();
-      await store.save(null,{no:out.no,title:out.title,rows:out.rows.length?out.rows:[blankRow()],status:"draft",tasirNo:"",branch:newBranch(),createdAt:now,updatedAt:now,createdByName:myName(),updatedByName:myName()}); ok++; }
-    catch(e){ bad++; if(e&&e.status===429){ await new Promise(r=>setTimeout(r,20000)); try{ const out=await gemini(files[i],c), now=Date.now(); await store.save(null,{no:out.no,title:out.title,rows:out.rows,status:"draft",tasirNo:"",branch:newBranch(),createdAt:now,updatedAt:now,createdByName:myName()}); ok++; bad--; }catch(x){} } }
+    const t0=Date.now(); let stage="تجهيز الملف"; const draw=()=>{ const bx=$("#batch"); if(bx) bx.innerHTML=`<span class="spin"></span> الكشف ${toAr(i+1)} من ${toAr(files.length)}: ${stage}… ${toAr(Math.round((Date.now()-t0)/1000))} ثانية`; }; draw(); const tk=setInterval(draw,1000);
+    try{ const out=await gemini(files[i],c,x=>{ stage=x; draw(); }); stage="حفظ المسودة"; draw(); const now=Date.now();
+      await saveT({no:out.no,title:out.title,rows:out.rows.length?out.rows:[blankRow()],status:"draft",tasirNo:"",branch:newBranch(),createdAt:now,updatedAt:now,createdByName:myName(),updatedByName:myName()}); ok++; }
+    catch(e){ bad++; lastErr=photoErr(e); }
+    finally{ clearInterval(tk); }
   }
-  const msg=`انضافت ${toAr(ok)} كشوفات كمسودات${bad?`، و${toAr(bad)} ما انقرأت`:""}. افتح كل وحدة وراجعها.`;
+  const msg=`انضافت ${toAr(ok)} كشوفات كمسودات${bad?`، و${toAr(bad)} ما انقرأت: ${lastErr}`:""}. افتح كل وحدة وراجعها.`;
   batchMsg=msg; const b2=$("#batch"); if(b2) b2.textContent=msg; toast(msg,6000);
 };
 
