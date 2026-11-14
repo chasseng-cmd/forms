@@ -561,7 +561,7 @@ const U = r => noJ(r.u);
 const fullD = r => { const d=String(r.d||"").trim(), o=String(r.o||"").trim(); return o && !/منش[أا]/.test(d) ? d+" منشأ "+o : d; };
 const stripT = s => String(s||"").replace(/[\u0640\u200c\u200d]/g,"").replace(TAJHIZ,"$1").replace(/(^|[\s\-–:،,.])و(?=(نصب|تركيب|ربط|تبديل|نقل|تشغيل)(\s|$))/g,"$1").replace(/\(\s*\)/g,"").replace(/بلاستك\s+ميلح/g,"هوز بلاستك").replace(/\s{2,}/g," ").trim();
 // اسم المادة للمخازن: بدون "تجهيز" وبدون المنشأ
-const autoSName = r => stripT(r.d).replace(/\s*[-–،,]?\s*(منشأ|منشا|المنشأ|المنشا|صنع|مستورد)\s*[:\-]?\s*\S+(\s+(المنشأ|الصنع))?/g,"").replace(/\s{2,}/g," ").trim();
+const autoSName = r => stripT(r.d).replace(/\s*[-–،,]?\s*\(?[^\s()]+\s+(المنشأ|المنشا)\)?(?=$|[\s،,.])/g,"").replace(/\(\s*\)/g,"").replace(/\s*[-–،,]?\s*(منشأ|منشا|المنشأ|المنشا|صنع|مستورد)\s*[:\-]?\s*\S+(\s+(المنشأ|الصنع))?/g,"").replace(/\s{2,}/g," ").trim();
 const sName = r => stripT((r.sname||"").trim()) || autoSName(r);
 const autoMetal = r => { const d=r.d||""; return /نحاس|ملف/.test(d)?"نحاس":/براص|برونز/.test(d)?"براص":/مطاط|جوان|سيل/.test(d)?"مطاط":/بلاستك|بلاستيك|PVC|بولي|هوز|PE\b/i.test(d)?"بلاستك":"حديد"; };
 const metalOf = r => (r.metal||"").trim() || autoMetal(r);
@@ -722,7 +722,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٣ لصق";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٤ منشأ";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
@@ -1447,7 +1447,14 @@ function bindForms(ks, base){
 }
 let rowView=(()=>{ try{ return localStorage.getItem("rowView")||"table"; }catch(e){ return "table"; } })();
 // المادة يجب لها منشأ (بخانة المنشأ أو مكتوب بالتفاصيل)
-const needO = r => String(r.d||"").trim() && kindOf(r)!=="labor" && !String(r.o||"").trim() && !/منش[أا]|صنع/.test(r.d||"");
+// اسم الدولة يكفي كمنشأ (صيني، ايراني، محلي = عراقي ...)
+const COUNTRIES="عراقي|ايراني|إيراني|صيني|تركي|ياباني|الماني|ألماني|ايطالي|إيطالي|امريكي|أمريكي|كوري|هندي|سعودي|اماراتي|إماراتي|مصري|اردني|أردني|سوري|لبناني|فرنسي|انكليزي|إنكليزي|بريطاني|اسباني|إسباني|روسي|تايواني|ماليزي|اندونيسي|إندونيسي|تايلندي|سويسري|سويدي|دنماركي|نمساوي|هولندي|بلجيكي|تشيكي|بولندي|برازيلي|كندي|باكستاني|فيتنامي|اوكراني|أوكراني|يوناني|برتغالي|خليجي|اوربي|أوربي|اوروبي|أوروبي|محلي|وطني";
+const CTRY_RE=new RegExp("(^|[\\s(\\-،,/])("+COUNTRIES+")(ة|ه)?(?=$|[\\s)\\-،,./])");
+const hasOrigin = d => /منش[أا]|صنع/.test(d||"") || CTRY_RE.test(d||"");
+// يكتب المنشأ بشكل موحد: «صيني» ← «صيني المنشأ»، «محلي» ← «عراقي المنشأ»
+const fixO = d => { d=String(d||"").replace(/منشا(?=$|[\s)،,.])/g,"منشأ"); if(/منشأ|المنشأ|صنع/.test(d)) return d;
+  return d.replace(CTRY_RE,(m,pre,c)=>pre+(/^(محلي|وطني)$/.test(c)?"عراقي":c)+" المنشأ"); };
+const needO = r => String(r.d||"").trim() && kindOf(r)!=="labor" && !String(r.o||"").trim() && !hasOrigin(r.d);
 /* ===== عرض السعر: تطلبه لجنة الاعتدال لفقرة، والفرع يصوّر الوصل ===== */
 function qBtns(k,r,i){
   const st=k.status||"draft", com=st==="review"&&committeeMatches(k), br=st==="draft"&&canCreate();
@@ -1618,7 +1625,7 @@ function bindEdit(){
     if(e.target.closest("#kfull")){ showPdf(jobsFor(["kashf"],cur,false),"الكشف","kashf.pdf"); return; } const av=e.target.dataset.av; if(av!==undefined){ cur.rows[+av].avail=e.target.dataset.v==="1"; dirty=true; renderRows(); return; }
     const d=e.target.dataset.del; if(d===undefined) return; if(String(cur.rows[+d].d).trim() && !(await ask("هل تريد حذف هذه الفقرة؟","حذف",true))) return;
     cur.rows.splice(+d,1); if(!cur.rows.length) cur.rows.push(blankRow()); dirty=true; renderEdit(); };
-  on("add",()=>{ const m=cur.rows.findIndex(needO); if(m>=0){ toast("اكتب المنشأ ضمن الفقرة "+toAr(m+1)+" (مثال: … منشأ صيني) قبل إضافة فقرة جديدة",5000); const e=rows.querySelector(`[data-i="${m}"] [data-k="d"]`); if(e) e.focus(); return; }
+  on("add",()=>{ const m=cur.rows.findIndex(needO); if(m>=0){ toast("اكتب المنشأ ضمن الفقرة "+toAr(m+1)+" (مثال: … صيني، ايراني، عراقي) قبل إضافة فقرة جديدة",5000); const e=rows.querySelector(`[data-i="${m}"] [data-k="d"]`); if(e) e.focus(); return; }
     const last=cur.rows[cur.rows.length-1]; if(last && !String(last.d).trim()){ toast("أكمل الفقرة الأخيرة أولاً"); return; }
     cur.rows.push(blankRow()); dirty=true; renderRows(); const a=rows.querySelectorAll('textarea[data-k="d"]'); a[a.length-1].focus(); });
   rows.querySelectorAll("textarea.ti").forEach(t=>{ t.style.height=t.scrollHeight+"px"; });
@@ -1711,7 +1718,8 @@ function valid(){
   if(dr && cur.vehicle && !String(cur.vno||"").trim()){ if(!document.querySelector('[data-vf="vno"]')) renderEdit(); toast("اكتب رقم الآلية"); const e=document.querySelector('[data-vf="vno"]'); if(e) e.focus(); return false; }
   if(dr && !cur.vehicle && !cur.reqType){ toast("اختر مقدم الطلب: مسؤول المجمعات أو مسؤول المشروع"); const e=document.getElementById("rqt"); if(e) e.focus(); return false; }
   const nq=cur.rows.findIndex(r=>r.needQuote && !r.quote); if(nq>=0 && (cur.status||"draft")==="draft"){ toast(`لجنة الاعتدال طلبت عرض سعر للفقرة ${toAr(nq+1)}. صوّر الوصل من زر 📷 بجانبها.`,6000); return false; }
-  const mo=cur.rows.findIndex(needO); if(mo>=0){ toast(`اكتب المنشأ ضمن الفقرة ${toAr(mo+1)} (مثال: … منشأ صيني)`,5000); return false; }
+  cur.rows.forEach(r=>{ if(kindOf(r)!=="labor") r.d=fixO(r.d); });
+  const mo=cur.rows.findIndex(needO); if(mo>=0){ toast(`اكتب المنشأ ضمن الفقرة ${toAr(mo+1)} (مثال: … صيني، ايراني، عراقي)`,5000); return false; }
   const bad=cur.rows.findIndex(r=>!String(r.d).trim()||!num(r.q)||(!r.store&&!num(r.p)));
   if(bad>=0){ toast(`الفقرة ${toAr(bad+1)} ناقصة (التفاصيل أو الكمية أو السعر)`); return false; }
   return true;
