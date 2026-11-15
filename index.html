@@ -354,14 +354,22 @@ function istimara(){
     row([lab("",{noTop:true}),nm(COMM()[0]||["","",""],NW[0],{noLeft:true}),nm(COMM()[1]||["","",""],NW[1],{noLeft:true,noRight:true}),nm(COMM()[2]||["","",""],NW[2],{noRight:true})]),
     row([lab("تاريخ اخر تصليح واخراج"),cell(marginParas(M.lastfix),VW,{span:3,v:VA.TOP})],2000),
     row([lab("بيان توفر الرصيد المخزني"),cell(marginParas(M.store),VW,{span:3,v:VA.TOP})],2000)],{nob:true});
+  // تقرير لجنة التدقيق الفني واعتدال الاسعار — أربعة أعضاء (عضو ×٣ + ر. اللجنة)
+  const cm4=[[],[],[],[]];
+  const t4=["عضو","عضو","عضو","ر. اللجنة"], A4=[2550,2550,2550,2550];
+  const an4=(r,i,b)=>cell([t4[i],"..........................",DATE].map(x=>P(x,{align:AL.CENTER,size:24})),2550,{noTop:true,mt:200,mb:100,...b});
+  const audit=table(A4,[
+    row([cell("تقرير لجنة التدقيق الفني واعتدال الاسعار",TW,{span:4,head:true,size:28})]),
+    row([cell([P(`تم تدقيق الكشف الفني المرفق والاسعار المثبته ازاء كل فقره من فقراته حسب العروض والاسعار السائده وكان المبلغ الكلي ( ${J.total&&+J.total?A(J.total):".........................."} ) دينار ، ( ${J.total&&+J.total&&J.words?J.words:".................................................."} ) دينار فقط لاغير وعليه وقعت اللجنة .`,{line:330}),...marginParas(M.rev)],TW,{span:4,noBottom:true,v:VA.TOP,mt:100})],1100),
+    row([an4(cm4[0],0,{noLeft:true}),an4(cm4[1],1,{noLeft:true,noRight:true}),an4(cm4[2],2,{noLeft:true,noRight:true}),an4(cm4[3],3,{noRight:true})])],{nob:true});
   const W3=[5600,2300,2300];
   const p2a=table(W3,[row([cell(J.section||"راي مسؤول شعبة (                    )",W3[0],{head:true,size:28}),cell("لجنة التنفيذ",W3[1],{head:true,size:28}),cell("لجنة الاستلام",W3[2],{head:true,size:28})]),
-    row([cell(marginParas(M.head),W3[0],{v:VA.TOP}),cell(names3(J.execNames),W3[1],{v:VA.TOP}),cell(names3(J.recvNames),W3[2],{v:VA.TOP})],2300),
+    row([cell(marginParas(M.head),W3[0],{v:VA.TOP}),cell(names3(J.execNames),W3[1],{v:VA.TOP}),cell(names3(J.recvNames),W3[2],{v:VA.TOP})],2000),
     row([cell("مدة تنفيذ العمل ( "+(J.duration?A(J.duration):"          ")+" ) ايام فعليه",TW,{span:3,size:28})])]);
-  const sec=(t,m)=>[row([cell(t,TW,{head:true,size:28})]),row([cell(marginParas(m),TW,{v:VA.TOP})],1700)];
+  const sec=(t,m)=>[row([cell(t,TW,{head:true,size:28})]),row([cell(marginParas(m),TW,{v:VA.TOP})],1450)];
   const p2b=table([TW],[...sec("رأي المعاون الفني",M.tech),...sec("تقرير شعبة الحسابات وتأييد توفر الاعتماد المالي",M.fin),...sec("موافقة السيد المدير على تنفيذ العمل والامر بالصرف",M.dir),...sec("تقرير الرقابه الداخليه",M.aud)]);
   const qr = qrBlock();
-  return page([head,body,sig1,P("",{after:300}),main,new Paragraph({children:[new PageBreak()]}),p2a,P("",{after:120}),p2b,P("",{after:80}),qr],{top:700,bottom:600,left:850,right:850});
+  return page([head,body,sig1,P("",{after:300}),main,new Paragraph({children:[new PageBreak()]}),audit,P("",{after:120}),p2a,P("",{after:120}),p2b,P("",{after:80}),qr],{top:700,bottom:600,left:850,right:850});
 }
 // ---------- استمارة تنفيذ اعمال — صيانة الاليات (صفحتان) ----------
 function istimara_aliyat(){
@@ -623,7 +631,7 @@ function formData0(form, ks){
     case "istimara_aliyat": return {items:k.rows.filter(r=>kindOf(r)!=="labor").map((r,i)=>toAr(i+1)+"- "+stripT(noJ(fullD(r)))+" "+(U(r)||"عدد")+" ("+toAr(nstr(num(r.q)))+")"), title:stripT(k.title),
       faults_text:stripT((k.faults||"").trim()||("بعد اجراء الكشف الموقعي وجد الحاجه الماسه الى "+scopeNoPrefix(k.title)+" وتم اعداد كشف مفصل بذلك مع التقدير .")),
       vtype:k.vtype||"", vno:k.vno||"", chassis:k.chassis||"", driver:k.driver||"", margins:marginsOf(k), duration:(k.duration||"").trim(), execNames:k.execNames||"", recvNames:k.recvNames||"", total:nstr(t), words:words(t)};
-    case "istimara": return {section:k.reqType==="project"?"راي رئيس قسم ( التشغيل )":k.reqType==="majma"?"راي مسؤول ( الاقضيه والنواحي )":undefined, title:stripT(k.title), faults_text:stripT((k.faults||"").trim()||autoFaults(k)), submitter:(k.submitter||"").trim()||undefined, margins:marginsOf(k), duration:(k.duration||"").trim(), execNames:k.execNames||"", recvNames:k.recvNames||""};
+    case "istimara": return {section:k.reqType==="project"?"راي رئيس قسم ( التشغيل )":k.reqType==="majma"?"راي مسؤول ( الاقضيه والنواحي )":undefined, title:stripT(k.title), faults_text:stripT((k.faults||"").trim()||autoFaults(k)), submitter:(k.submitter||"").trim()||undefined, margins:marginsOf(k), duration:(k.duration||"").trim(), execNames:k.execNames||"", recvNames:k.recvNames||"", total:nstr(total(k)), words:words(total(k))};
     case "mahdar": return {sections:list.map(x=>({title:stripT(x.title), rows:x.rows.map(r=>[stripT(noJ(fullD(r))), qtyUnit(r), r.store?"منفذه (اخراج مخزني)":"منفذه"])}))};
     case "mutabaqa":
     case "idkhal_ikhraj": return {items:all(x=>entries(x).map(r=>[stripT(noJ(fullD(r))), U(r)||"عدد", nstr(num(r.q))]))};
@@ -729,7 +737,7 @@ function ask(msg, okText="نعم", danger=false){
     m.onclick=e=>{const a=e.target.dataset.a; if(a!==undefined){m.remove();res(a==="1");}}; document.body.appendChild(m); });
 }
 // الآيفون (خصوصاً التطبيق المضاف للشاشة الرئيسية) لا ينزّل الملفات بالرابط العادي، فنستعمل نافذة المشاركة: «حفظ في الملفات» أو «طباعة»
-const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٤ منشأ";
+const APP_VER = "١٤/١١ — طباعة ١٤ · صور ١٥ استمارة";
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const IS_MOBILE = IS_IOS || /Android/i.test(navigator.userAgent);
 const MIME = n => /\.pdf$/i.test(n)?"application/pdf":/\.docx$/i.test(n)?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/octet-stream";
